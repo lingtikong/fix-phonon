@@ -1,0 +1,21 @@
+The files in this directory are a user-contributed package for LAMMPS.
+
+This package implements the method to measure the dynamical matrices
+and consequently the phonon dispersion directly from molecular dynamics
+simulations, as a new fix to LAMMPS: FixPhonon.
+
+See the documentation file of this command for detailed usage.
+
+The compiling of this package along with LAMMPS requires that the FFT3d
+wrappers from the kspace package of LAMMPS be included as well.
+
+Besides, you should also append 'user-phonon' to the 'PACKUSER' variable
+in the file of src/Makefile before invoke `make yes-user-phonon`.
+
+For installation, please refer to file INSTALL.
+
+For usage, please check the doc and example directories.
+
+
+Author: Ling-Ti Kong, konglt@sjtu.edu.cn
+version: 0.12 / Sep 2010
