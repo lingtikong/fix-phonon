@@ -10,6 +10,9 @@ extern "C"{
 
 class Memory {
 public:
+  double **create_2d_double_array(int, int, const char *);
+  void destroy_2d_double_array(double **);
+
   doublecomplex **create_2d_complex_array(int, int, const char *);
   void destroy_2d_complex_array(doublecomplex **);
   void *smalloc(int, const char *);

@@ -1,6 +1,32 @@
 #include "memory.h"
 
 /* ----------------------------------------------------------------------------
+ * method to create 2d double array
+ * ---------------------------------------------------------------------------- */
+double **Memory::create_2d_double_array(int n1, int n2, const char *name)
+{
+  double *data   = (double  *) smalloc(n1*n2*sizeof(double),name);
+  double **array = (double **) smalloc(n1*sizeof(double *),name);
+
+  int n = 0;
+  for (int i = 0; i < n1; i++) {
+    array[i] = &data[n];
+    n += n2;
+  }
+return array;
+}
+
+/* ----------------------------------------------------------------------------
+ * method to destroy 2d double array
+ * ---------------------------------------------------------------------------- */
+void Memory::destroy_2d_double_array(double **array)
+{
+  if (array == NULL) return;
+  sfree(array[0]);
+  sfree(array);
+}
+
+/* ----------------------------------------------------------------------------
  * method to create 2d complex array
  * ---------------------------------------------------------------------------- */
 doublecomplex **Memory::create_2d_complex_array(int n1, int n2, const char *name)

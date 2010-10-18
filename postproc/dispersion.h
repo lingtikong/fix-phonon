@@ -1,5 +1,6 @@
 #include "lmp_phonon.h"
 #include <complex>
+#include "memory.h"
 
 using namespace std;
 
@@ -13,6 +14,11 @@ public:
 private:
   int job;
   char *outfile;
+
+  int nq;
+  double **qpts, *wt;
+
+  Memory *memory;
 
   void dos();
   void disp();
