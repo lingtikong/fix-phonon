@@ -4,6 +4,12 @@
 #include "stdlib.h"
 #include "string.h"
 
+#ifdef UseSPG
+extern "C"{
+#include "spglib.h"
+}
+#endif
+
 #define MAX_STRING_LEN 256
 #define MIN(a,b) ((a)>(b)?(b):(a))
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -14,6 +20,9 @@
  * ---------------------------------------------------------------------------- */
 Dispersion::Dispersion(LMP_PHONON *dm)
 {
+  // create memory 
+  memory = new Memory();
+
   // pass the class from main
   dynmat = dm;
 
@@ -52,6 +61,9 @@ Dispersion::Dispersion(LMP_PHONON *dm)
 Dispersion::~Dispersion()
 {
   dynmat = NULL;
+  if (qpts) memory->destroy_2d_double_array(qpts);
+  if (wt)  delete []wt;
+  if (memory) delete memory;
 }
 
 /* ----------------------------------------------------------------------------
@@ -65,36 +77,136 @@ void Dispersion::dos()
   printf("\nThe q-mesh size from the read dynamical matrix is: %d x %d x %d\n", nx, ny, nz);
   printf("Please input your desired size to measure the DOS [%d %d %d]: ", nx, ny, nz);
   if (strlen(gets(str)) > 0) sscanf(str,"%d %d %d", &nx, &ny, &nz);
-
   if (nx<1||ny<1||nz<1) return;
   if (dynmat->nx == 1) nx = 1;
   if (dynmat->ny == 1) ny = 1;
   if (dynmat->nz == 1) nz = 1;
-  int nq = nx*ny*nz;
-  printf("Your new q-mesh size would be: %d x %d x %d\n", nx,ny,nz);
+
+#ifdef UseSPG
+  // ask method to generate q-points
+  int method = 2;
+  printf("Please select your method to generate the q-points:\n");
+  printf("  1. uniform;\n  2. Monkhost-Pack mesh;\n");
+  printf("Your choice [2]: ");
+  if (strlen(gets(str)) > 0) sscanf(str,"%d", &method);
+#endif
+ 
+  if (qpts) memory->destroy_2d_double_array(qpts);
+  if (wt)  delete []wt;
+
+#ifdef UseSPG
+  if (method == 1){
+#endif
+    nq = nx*ny*nz;
+    qpts = memory->create_2d_double_array(nq, 3, "dos_qpts");
+    wt = new double [nq];
+    int iq = 0;
+    for (int i=0; i<nx; i++)
+    for (int j=0; j<ny; j++)
+    for (int k=0; k<nz; k++){
+      qpts[iq][0] = double(i)/double(nx);
+      qpts[iq][1] = double(j)/double(ny);
+      qpts[iq][2] = double(k)/double(nz);
+      wt[iq++] = 1.;
+    }
+#ifdef UseSPG
+  } else {
+    double lattice[3][3];
+    int num_atom, *types;
+    /*----------------------------------------------------------------
+     * Ask for lattice info from the user; the format of the file is:
+     * A1_x A1_y A1_z
+     * A2_x A2_y A2_z
+     * A3_x A3_y A3_z
+     * natom
+     * Type_1 sx_1 sy_1 sz_1
+     * ...
+     * Type_n sx_n sy_n sz_n
+     *----------------------------------------------------------------*/
+    printf("Please input the name of file containing the unit cell info: ");
+    int n = strlen(gets(str))+1;
+    char *fname = new char[n];
+    strcpy(fname, str);
+    FILE *fp = fopen(fname,"r");
+    if (fp == NULL) return;
+
+    for (int i=0; i<3; i++){
+      if (fgets(str,MAX_STRING_LEN,fp) == NULL) return;
+      sscanf(str,"%lg %lg %lg", &lattice[i][0], &lattice[i][1], &lattice[i][2]);
+    }
+    if (fgets(str,MAX_STRING_LEN,fp) == NULL) return;
+    sscanf(str,"%d",&num_atom);
+    if (num_atom < 1) return;
+    types = new int[num_atom];
+    double position[num_atom][3];
+    
+    for (int i=0; i<num_atom; i++){
+      if (fgets(str,MAX_STRING_LEN,fp) == NULL) return;
+      sscanf(str,"%d %lg %lg %lg",&types[i],&position[i][0],&position[i][1],&position[i][2]);
+    }
+    fclose(fp);
+    if (fname) delete []fname;
+
+    int mesh[3], shift[3], is_time_reversal = 0;
+    mesh[0] = nx; mesh[1] = ny; mesh[2] = nz;
+    shift[0] = shift[1] = shift[2] = 0;
+    int num_grid = mesh[0]*mesh[1]*mesh[2];
+    int grid_point[num_grid][3], map[num_grid];
+    double symprec = 1.e-5;
+
+    nq = spg_get_ir_reciprocal_mesh(grid_point, map, num_grid,
+                               mesh, shift, is_time_reversal,
+                               lattice, position, types,
+                               num_atom, symprec);
+    qpts = memory->create_2d_double_array(nq,3,"qpts");
+    wt = new double[nq];
+
+    int *iq2idx = new int[num_grid];
+    int numq = 0;
+    for (int i=0; i<num_grid; i++){
+      int iq = map[i];
+      if (iq == i) iq2idx[iq] = numq++;
+    }
+    for (int iq=0; iq<nq; iq++) wt[iq] = 0.;
+    numq = 0;
+    for (int i=0; i<num_grid; i++){
+      int iq = map[i];
+      if (iq == i){
+        qpts[numq][0] = double(grid_point[i][0])/double(mesh[0]);
+        qpts[numq][1] = double(grid_point[i][1])/double(mesh[1]);
+        qpts[numq][2] = double(grid_point[i][2])/double(mesh[2]);
+        numq++;
+      }
+      wt[iq2idx[iq]] += 1.;
+    }
+    delete []iq2idx;
+
+    double wsum = 0.;
+    for (int iq=0; iq<nq; iq++) wsum += wt[iq];
+    for (int iq=0; iq<nq; iq++) wt[iq] /= wsum;
+    
+    if (types) delete []types;
+  }
+#endif
+  printf("Your new q-mesh size would be: %d x %d x %d => %d points\n", nx,ny,nz,nq);
 
   // now to calculate the frequencies at all q-points
   int ndim = dynmat->fftdim;
-  double egvs[nq][ndim], q[3];
-  int idx=0;
-  for (int i=0; i<nx; i++){
-    q[0] = double(i)/double(nx);
-    for (int j=0; j<ny; j++){
-      q[1] = double(j)/double(ny);
-      for (int k=0; k<nz; k++){
-        q[2] = double(k)/double(nz);
-        dynmat->getDMq(q);
-        dynmat->geteigen(egvs[idx++]);
-      }
-    }
+  double **egvs, *q;
+  egvs = memory->create_2d_double_array(nq,ndim,"dos_egvs");
+  
+  for (int iq=0; iq<nq; iq++){
+    q = qpts[iq];
+    dynmat->getDMq(q);
+    dynmat->geteigen(egvs[iq]);
   }
   // now to get the frequency range
   double fmin, fmax;
   fmin = fmax = egvs[0][0];
-  for (int i=0; i<nq; i++){
+  for (int iq=0; iq<nq; iq++){
     for (int j=0; j<ndim; j++){
-      fmin = MIN(fmin, egvs[i][j]);
-      fmax = MAX(fmax, egvs[i][j]);
+      fmin = MIN(fmin, egvs[iq][j]);
+      fmax = MAX(fmax, egvs[iq][j]);
     }
   }
 
@@ -110,18 +222,20 @@ void Dispersion::dos()
   intv = MAX(2,intv);
 
   double finc = (fmax-fmin)/double(intv), finc_inv = 1./finc;;
-  double dos[intv];
+  double *dos;
+  dos = new double[intv];
   for (int i=0; i<intv; i++) dos[i] = 0.;
 
   // now to calculate the DOS
-  int total=0;
-  for (int i=0; i<nq; i++){
+  double total=0.;
+  for (int iq=0; iq<nq; iq++){
     for (int j=0; j<ndim; j++){
-      idx = int(egvs[i][j]*finc_inv);
-      if (idx>=0 && idx<intv){dos[idx] += 1.; total++;}
+      int idx = int(egvs[iq][j]*finc_inv);
+      if (idx>=0 && idx<intv){dos[idx] += wt[iq]; total += wt[iq];}
     }
   }
 
+  memory->destroy_2d_double_array(egvs);
   // smooth dos ?
   printf("Would you like to smooth the phonon dos? (y/n)[n]: ");
   if (strlen(gets(str)) > 0){
@@ -131,8 +245,8 @@ void Dispersion::dos()
   }
 
   // normalize dos to 1
-  double sum = 1./double(total)*finc_inv;
-  for (int i=0; i<intv; i++) dos[i] *= sum;
+  double rsum = 1./total*finc_inv;
+  for (int i=0; i<intv; i++) dos[i] *= rsum;
 
   // now to output the phonon DOS
   nr = 0;
@@ -154,6 +268,9 @@ void Dispersion::dos()
   }
   fclose(fp);
   delete []outfile;
+  delete []dos;
+
+return;
 }
 
 void Dispersion::disp()
