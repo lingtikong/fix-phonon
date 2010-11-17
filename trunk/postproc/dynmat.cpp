@@ -1,4 +1,4 @@
-#include "lmp_phonon.h"
+#include "dynmat.h"
 #include "string.h"
 #include "math.h"
 
@@ -7,7 +7,7 @@ using namespace std;
 #define MAX_STRING_LEN 256
 
 // to intialize the class
-LMP_PHONON::LMP_PHONON(int argc, char **argv)
+DynMat::DynMat(int argc, char **argv)
 {
   // get the binary file name from command line option or user input
   char str[MAX_STRING_LEN];
@@ -72,8 +72,8 @@ LMP_PHONON::LMP_PHONON(int argc, char **argv)
 
   // now to allocate memory for DM
   memory = new Memory;
-  DM_all = memory->create_2d_complex_array(npt, fftdim2, "LMP_PHONON:DM_all");
-  DM_q   = memory->create_2d_complex_array(fftdim,fftdim,"LMP_PHONON:DM_q");
+  DM_all = memory->create_2d_complex_array(npt, fftdim2, "DynMat:DM_all");
+  DM_q   = memory->create_2d_complex_array(fftdim,fftdim,"DynMat:DM_q");
 
   // read all dynamical matrix info into DM_all
   nr = fread(DM_all[0], sizeof(doublecomplex), npt*fftdim2, fp);
@@ -88,7 +88,7 @@ LMP_PHONON::LMP_PHONON(int argc, char **argv)
 }
 
 // to destroy the class
-LMP_PHONON::~LMP_PHONON()
+DynMat::~DynMat()
 {
  // destroy all memory allocated
  delete []binfile;
@@ -105,7 +105,7 @@ LMP_PHONON::~LMP_PHONON()
 /* ----------------------------------------------------------------------------
  * method to write DM_q to file, single point
  * ---------------------------------------------------------------------------- */
-void LMP_PHONON::writeDMq(double *q)
+void DynMat::writeDMq(double *q)
 {
   FILE *fp;
   // only ask for file name for the first time
@@ -138,7 +138,7 @@ return;
 /* ----------------------------------------------------------------------------
  * method to write DM_q to file, dispersion-like
  * ---------------------------------------------------------------------------- */
-void LMP_PHONON::writeDMq(double *q, const double qr, FILE *fp)
+void DynMat::writeDMq(double *q, const double qr, FILE *fp)
 {
 
   fprintf(fp, "%lg %lg %lg %lg ", q[0], q[1], q[2], qr);
@@ -150,7 +150,7 @@ void LMP_PHONON::writeDMq(double *q, const double qr, FILE *fp)
 return;
 }
 
-int LMP_PHONON::geteigen(double *egv)
+int DynMat::geteigen(double *egv)
 {
   char jobz, uplo;
   integer n, lda, lwork, lrwork, *iwork, liwork, info;
@@ -184,14 +184,14 @@ int LMP_PHONON::geteigen(double *egv)
 return info;
 }
 
-void LMP_PHONON::getDMq(double *q)
+void DynMat::getDMq(double *q)
 {
   interpolate->execute(q, DM_q[0]);
 
 return;
 }
 
-void LMP_PHONON::getIntMeth()
+void DynMat::getIntMeth()
 {
   char str[MAX_STRING_LEN];
   int im=1;

@@ -1,5 +1,5 @@
-#ifndef LMP_PHONON_H
-#define LMP_PHONON_H
+#ifndef DYNMAT_H
+#define DYNMAT_H
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -10,14 +10,15 @@ extern "C"{
 #include "clapack.h"
 }
 
-class LMP_PHONON
+class DynMat
 {
 public:
 
-  LMP_PHONON(int, char**);
-  ~LMP_PHONON();
+  DynMat(int, char**);
+  ~DynMat();
 
-  int nx, ny, nz, fftdim;
+  int nx, ny, nz, nucell, sysdim, fftdim;
+  double eml2f;
   char *funit;
 
   void getDMq(double *);
@@ -26,18 +27,19 @@ public:
   int geteigen(double *);
   void getIntMeth();
 
+  doublecomplex **DM_q;
+
 private:
 
   Interpolate *interpolate;
   
   Memory *memory;
-  int nucell, sysdim;
   int npt, fftdim2;
 
   char *binfile, *dmfile, *dmdfile;
-  double boltz, eml2f, q[3];
+  double boltz, q[3];
 
-  doublecomplex **DM_all, **DM_q;
+  doublecomplex **DM_all;
 
 };
 #endif
