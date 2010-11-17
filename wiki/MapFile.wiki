@@ -1,4 +1,4 @@
-#Explains the format and the meaning of the map file
+#The format and the meaning of the map file
 
 = Introduction =
 Frequently, one may be confused with the mandatory mapfile. However, it is rather simple and straightforward: this file simply shows the map between the lattice indices of an atom and its unique id in the simulation box.
@@ -17,15 +17,17 @@ The second line: comment line, put whatever you want.
 From line 3 to line (nx`*`ny`*`nz`*`n+2): _l1_, _l2_, _l3_ are the indices of the unit cell which atom _id_ belongs to, and atom _id_ is the _k_th atom in this unit cell.
 
 = Details =
-Suppose the basis vectors of your unit cell is *a*1, *a*2, and *a*3, and there are _n_ atoms in the unit cell, the position of the _k_th atom in the unit cell is
+Suppose the basis vectors of your unit cell is *a*_1_, *a*_2_, and *a*_3_, and there are _n_ atoms in the unit cell, the position of the _k_-th atom in the unit cell is
 
-*r*[k] = sx[k]`*` *a*1 + sy[k]`*`*a*2 + sz[k]`*`*a*3.
+*r*`[`k`]` = sx`[`k`]*` *a*_1_ + sy`[`k`]*` *a*_2_ + sz`[`k`]*` *a*_3_.
 
 Consequently for an atom _id_, its equilibrium position might be:
 
-x[id] = ( l1 + sx[k] ) `*`*a*1;
-y[id] = ( l2 + sy[k] ) `*`*a*2;
-z[id] = ( l3 + sz[k] ) `*`*a*3;
+x`[`id`]` = ( l1 + sx`[`k`]` ) `*` *a*_1_;
+
+y`[`id`]` = ( l2 + sy`[`k`]` ) `*` *a*_2_;
+
+z`[`id`]` = ( l3 + sz`[`k`]` ) `*` *a*_3_;
 
 where _l1_ goes from _0_ to _nx-1_, and so forth.
-Therefore, the four numbers l1, l2, l3 and k can be uniquely mapped to the atom _id_.
+Therefore, the four numbers (_l1, l2, l3, k)_ is mapped to the atom _id_ uniquely.
