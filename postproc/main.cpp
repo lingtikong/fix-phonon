@@ -1,17 +1,17 @@
 #include "stdio.h"
 #include "stdlib.h"
-#include "lmp_phonon.h"
-#include "dispersion.h"
+#include "dynmat.h"
+#include "phonon.h"
 
 using namespace std;
 
 int main(int argc, char** argv)
 {
 
-  LMP_PHONON *dynmat = new LMP_PHONON(argc, argv);
-  Dispersion *driver = new Dispersion(dynmat);
+  DynMat *dynmat = new DynMat(argc, argv);
+  Phonon *phonon = new Phonon(dynmat);
 
-  delete driver;
+  delete phonon;
   delete dynmat;
 
 return 0;
