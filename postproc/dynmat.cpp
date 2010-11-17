@@ -2,45 +2,40 @@
 #include "string.h"
 #include "math.h"
 
-using namespace std;
-
-#define MAX_STRING_LEN 256
+#define MAXLINE 256
 
 // to intialize the class
-DynMat::DynMat(int argc, char **argv)
+DynMat::DynMat(int narg, char **arg)
 {
   // get the binary file name from command line option or user input
-  char str[MAX_STRING_LEN];
-  if (argc<2){
-    int nr = 0;
-    while (nr != 1){
-      printf("\nPlease input the binary file name from fix_phonon: ");
-      nr = scanf("%s", str); while (getchar() != '\n');
-    }
+  char str[MAXLINE];
+  if (narg < 2) {
+    do printf("\nPlease input the binary file name from fix_phonon: ");
+    while (strlen(gets(str)) < 1);
+
     int n = strlen(str) + 1;
     binfile = new char[n];
     strcpy(binfile, str);
   } else {
-    int n = strlen(argv[1]) + 1;
+    int n = strlen(arg[1]) + 1;
     binfile = new char[n];
-    strcpy(binfile, argv[1]);
+    strcpy(binfile, arg[1]);
   }
 
   // open the binary file
   FILE *fp = fopen(binfile, "rb");
-  if (fp==NULL ){
+  if (fp == NULL) {
     printf("\nFile %s not found! Programe terminated.\n", binfile);
     exit(1);
   }
 
   // read data from the binary file
-  size_t nr;
-  nr = fread(&sysdim, sizeof(int), 1, fp); if (nr != 1){printf("\nError while reading from file: %s\n", binfile); fclose(fp); exit(2);}
-  nr = fread(&nx,     sizeof(int), 1, fp); if (nr != 1){printf("\nError while reading from file: %s\n", binfile); fclose(fp); exit(2);}
-  nr = fread(&ny,     sizeof(int), 1, fp); if (nr != 1){printf("\nError while reading from file: %s\n", binfile); fclose(fp); exit(2);}
-  nr = fread(&nz,     sizeof(int), 1, fp); if (nr != 1){printf("\nError while reading from file: %s\n", binfile); fclose(fp); exit(2);}
-  nr = fread(&nucell, sizeof(int), 1, fp); if (nr != 1){printf("\nError while reading from file: %s\n", binfile); fclose(fp); exit(2);}
-  nr = fread(&boltz,  sizeof(double), 1, fp); if (nr != 1){printf("\nError while reading from file: %s\n", binfile); fclose(fp); exit(2);}
+  if ( fread(&sysdim, sizeof(int),    1, fp) != 1) {printf("\nError while reading sysdim from file: %s\n", binfile); fclose(fp); exit(2);}
+  if ( fread(&nx,     sizeof(int),    1, fp) != 1) {printf("\nError while reading nx from file: %s\n", binfile); fclose(fp); exit(2);}
+  if ( fread(&ny,     sizeof(int),    1, fp) != 1) {printf("\nError while reading ny from file: %s\n", binfile); fclose(fp); exit(2);}
+  if ( fread(&nz,     sizeof(int),    1, fp) != 1) {printf("\nError while reading nz from file: %s\n", binfile); fclose(fp); exit(2);}
+  if ( fread(&nucell, sizeof(int),    1, fp) != 1) {printf("\nError while reading nucell from file: %s\n", binfile); fclose(fp); exit(2);}
+  if ( fread(&boltz,  sizeof(double), 1, fp) != 1) {printf("\nError while reading boltz from file: %s\n", binfile); fclose(fp); exit(2);}
 
   fftdim = sysdim*nucell; fftdim2 = fftdim*fftdim;
   npt = nx*ny*nz;
@@ -76,9 +71,12 @@ DynMat::DynMat(int argc, char **argv)
   DM_q   = memory->create_2d_complex_array(fftdim,fftdim,"DynMat:DM_q");
 
   // read all dynamical matrix info into DM_all
-  nr = fread(DM_all[0], sizeof(doublecomplex), npt*fftdim2, fp);
+  if ( fread(DM_all[0], sizeof(doublecomplex), npt*fftdim2, fp) != size_t(npt*fftdim2)){
+    printf("\nError while reading the DM from file: %s\n", binfile);
+    fclose(fp);
+    exit(1);
+  }
   fclose(fp);
-  if (nr != size_t(npt*fftdim2)) {printf("\nError while reading from file: %s\n", binfile); exit(4);}
 
   // ask for the interpolation method
   interpolate =  new Interpolate(nx, ny, nz, fftdim2, DM_all);
@@ -94,7 +92,6 @@ DynMat::~DynMat()
  delete []binfile;
  delete []funit;
  if (dmfile) delete []dmfile;
- if (dmdfile) delete []dmdfile;
  if (interpolate) delete interpolate;
 
  memory->destroy_2d_complex_array(DM_all);
@@ -111,12 +108,9 @@ void DynMat::writeDMq(double *q)
   // only ask for file name for the first time
   // other calls will append the result to the file.
   if (dmfile == NULL){
-    char str[MAX_STRING_LEN];
-    int nr = 0;
-    while (nr != 1){
-      printf("\nPlease input the filename to output the DM at selected q: ");
-      nr = scanf("%s", str); while ( getchar() != '\n' );
-    }
+    char str[MAXLINE];
+    do  printf("\nPlease input the filename to output the DM at selected q: ");
+    while (strlen(gets(str)) < 1);
     int n = strlen(str) + 1;
     dmfile = new char[n];
     strcpy(dmfile, str);
@@ -150,20 +144,28 @@ void DynMat::writeDMq(double *q, const double qr, FILE *fp)
 return;
 }
 
-int DynMat::geteigen(double *egv)
+/* ----------------------------------------------------------------------------
+ * method to evaluate the eigenvalues of current q-point;
+ * return the eigenvalues in egv.
+ * cLapack subroutine zheevd is employed.
+ * ---------------------------------------------------------------------------- */
+int DynMat::geteigen(double *egv, int flag)
 {
   char jobz, uplo;
   integer n, lda, lwork, lrwork, *iwork, liwork, info;
   doublecomplex *work;
   doublereal *w = &egv[0], *rwork;
 
-  jobz = 'N'; uplo = 'U';
   n     = fftdim;
-  lwork = n + 1;
+  if (flag) jobz = 'V';
+  else jobz = 'N';
+
+  uplo = 'U';
+  lwork = (n+2)*n;
+  lrwork = 1 + (5+n+n)*n;
+  liwork = 3 + 5*n;
   lda    = n;
-  lrwork = n;
-  liwork = n;
-  work = new doublecomplex [lwork];
+  work  = new doublecomplex [lwork];
   rwork = new double [lrwork];
   iwork = new long [liwork];
 
@@ -184,6 +186,9 @@ int DynMat::geteigen(double *egv)
 return info;
 }
 
+/* ----------------------------------------------------------------------------
+ * method to get the Dynamical Matrix at q
+ * ---------------------------------------------------------------------------- */
 void DynMat::getDMq(double *q)
 {
   interpolate->execute(q, DM_q[0]);
@@ -191,15 +196,19 @@ void DynMat::getDMq(double *q)
 return;
 }
 
+/* ----------------------------------------------------------------------------
+ * method to select the interpolation method.
+ * ---------------------------------------------------------------------------- */
 void DynMat::getIntMeth()
 {
-  char str[MAX_STRING_LEN];
-  int im=1;
+  char str[MAXLINE];
+  int im = 1;
   printf("\n");for(int i=0; i<60; i++) printf("=");
   printf("\nWhich interpolation method would you like to use?\n");
   printf("  1. Tricubic;\n  2. Trilinear;\n");
   printf("Your choice [1]: ");
-  if (strlen(gets(str)) >0) sscanf(str,"%d", &im);
+  if (strlen(gets(str)) >0) im = atoi(strtok(str," \t\n\r\f"));
+
   im =2-im%2;
   interpolate->which = im;
   printf("Your chose: %d\n", im);
