@@ -10,21 +10,23 @@ extern "C"{
 #include "clapack.h"
 }
 
-class DynMat
-{
+using namespace std;
+
+class DynMat {
 public:
 
   DynMat(int, char**);
   ~DynMat();
 
-  int nx, ny, nz, nucell, sysdim, fftdim;
+  int nx, ny, nz, nucell;
+  int sysdim, fftdim;
   double eml2f;
   char *funit;
 
   void getDMq(double *);
   void writeDMq(double *);
   void writeDMq(double *, const double, FILE *fp);
-  int geteigen(double *);
+  int geteigen(double *, int);
   void getIntMeth();
 
   doublecomplex **DM_q;
@@ -36,7 +38,7 @@ private:
   Memory *memory;
   int npt, fftdim2;
 
-  char *binfile, *dmfile, *dmdfile;
+  char *binfile, *dmfile;
   double boltz, q[3];
 
   doublecomplex **DM_all;

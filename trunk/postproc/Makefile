@@ -1,7 +1,7 @@
 .SUFFIXES : .o .cpp
 # compiler and flags
 CC     = g++
-LINK   = $(CC)
+LINK   = $(CC) -static
 CFLAGS = -O $(DEBUG) $(UFLAG)
 #
 OFLAGS = -O $(DEBUG)
@@ -22,11 +22,11 @@ SPGINC = -I/opt/spglib/0.7.1/include
 SPGLIB = -L/opt/spglib/0.7.1/lib -lsymspg
 
 # Debug flags
-#DEBUG = -g
+#DEBUG = -g -DDEBUG
 #====================================================================
-BASE   = phana
+ROOT   = phana
 # executable name
-EXE    = $(BASE)
+EXE    = $(ROOT)
 #====================================================================
 # source and rules
 SRC = $(wildcard *.cpp)
@@ -42,7 +42,7 @@ clean:
 	rm -f *.o *~ *.mod ${EXE}
 
 tar:
-	rm -f ${BASE}.tar; tar -czvf ${BASE}.tar.gz *.cpp  *.h *.f *.f90 Makefile README
+	rm -f ${ROOT}.tar; tar -czvf ${ROOT}.tar.gz *.cpp  *.h Makefile README
 
 .f.o:
 	$(FC) $(FFLAGS) $(FREE) $(MPI) ${INC} -c $<
