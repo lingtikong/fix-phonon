@@ -76,7 +76,25 @@ DynMat::DynMat(int narg, char **arg)
     fclose(fp);
     exit(1);
   }
+
+  // now try to read unit cell info from the binary file
+  flag_latinfo = 0;
+  basis = memory->create_2d_double_array(nucell,sysdim,"DynMat:basis");
+  attyp = new int[nucell];
+  
+  if ( fread(&Tmeasure,   sizeof(double), 1, fp) == 1) flag_latinfo |= 1;
+  if ( fread(&basevec[0], sizeof(double), 9, fp) == 9) flag_latinfo |= 2;
+  if ( fread(basis[0],    sizeof(double), fftdim, fp) == fftdim) flag_latinfo |= 4;
+  if ( fread(&attyp[0],   sizeof(int),    nucell, fp) == nucell) flag_latinfo |= 8;
   fclose(fp);
+
+  if ((flag_latinfo&15) == 15){
+    flag_latinfo = 1;
+    car2dir();
+  } else {
+    flag_latinfo = 0;
+    Tmeasure = 0.;
+  }
 
   // ask for the interpolation method
   interpolate =  new Interpolate(nx, ny, nz, fftdim2, DM_all);
@@ -93,9 +111,11 @@ DynMat::~DynMat()
  delete []funit;
  if (dmfile) delete []dmfile;
  if (interpolate) delete interpolate;
+ if (attyp) delete []attyp;
 
  memory->destroy_2d_complex_array(DM_all);
  memory->destroy_2d_complex_array(DM_q);
+ memory->destroy_2d_double_array(basis);
  delete memory;
 }
 
@@ -213,6 +233,47 @@ void DynMat::getIntMeth()
   interpolate->which = im;
   printf("Your chose: %d\n", im);
   for(int i=0; i<60; i++) printf("="); printf("\n\n");
+
+return;
+}
+
+
+/* ----------------------------------------------------------------------------
+ * private method to convert the cartisan coordinate of basis into fractional
+ * ---------------------------------------------------------------------------- */
+void DynMat::car2dir()
+{
+  if (sysdim == 1){
+    double h_inv = 1./basevec[0];
+    for (int i=0; i<nucell; i++) basis[i][0] *= h_inv;
+  } else if (sysdim == 2){
+    double h[3], h_inv[3];
+    h[0] = basevec[0]; h[1] = basevec[4]; h[2] = basevec[3];
+    h_inv[0] = 1./h[0]; h_inv[1] = 1./h[1];
+    h_inv[2] = -h[2]/(h[0]*h[1]);
+    for (int i=0; i<nucell; i++){
+      double x[2];
+      x[0] = basis[i][0]; x[1] = basis[i][1];
+      basis[i][0] = h_inv[0]*x[0] + h_inv[2]*x[1];
+      basis[i][1] = h_inv[1]*x[1];
+    }
+  } else {
+    double h[6], h_inv[6];
+    h[0] = basevec[0]; h[1] = basevec[4]; h[2] = basevec[8];
+    h[3] = basevec[7]; h[4] = basevec[6]; h[5] = basevec[3];
+    for (int i=0; i<3; i++) h_inv[i] = 1./h[i];
+    h_inv[3] = -h[3]/(h[1]*h[2]);
+    h_inv[4] = (h[3]*h[5]-h[1]*h[4])/(h[0]*h[1]*h[2]);
+    h_inv[5] = -h[5]/(h[0]*h[1]);
+   
+    for (int i=0; i<nucell; i++){
+      double x[3];
+      x[0] = basis[i][0]; x[1] = basis[i][1]; x[2] = basis[i][2];
+      basis[i][0] = h_inv[0]*x[0] + h_inv[5]*x[1] + h_inv[4]*x[2];
+      basis[i][1] = h_inv[1]*x[1] + h_inv[3]*x[2];
+      basis[i][2] = h_inv[2]*x[2];
+    }
+  }
 
 return;
 }

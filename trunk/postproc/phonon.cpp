@@ -33,6 +33,11 @@ Phonon::Phonon(DynMat *dm)
   eigs = NULL;
   locals = NULL;
 
+#ifdef UseSPG
+  attyp = NULL;
+  atpos = NULL;
+#endif
+
   // display the menu
   char str[MAXLINE];
   while ( 1 ){
@@ -274,7 +279,7 @@ void Phonon::ldos_rsgf()
     
     // time info
     Timer *time = new Timer();
-    printf("\nNow to compute the LDOS for atom %d by Real Space Greens function method ...");
+    printf("\nNow to compute the LDOS for atom %d by Real Space Greens function method ...", ik);
 
     // run real space green's function calculation
     Green *green = new Green(dynmat->nucell, dynmat->sysdim, nit, fmin, fmax, ndos, eps, Hessian, ik);
@@ -514,13 +519,8 @@ void Phonon::therm()
   const double h = 6.62606896e-34, Kb = 1.380658e-23, eV = 1.60217733e-19;
 
   // first temperature
-  double T;
-  while (1){
-    printf("Please input the desired temperature (K), enter to exit: ");
-    if (count_words(gets(str)) < 1) break;
-    T = atof(strtok(str," \t\n\r\f"));
-    if (T <= 0.) break;
-
+  double T = dynmat->Tmeasure;
+  do {
     // constants under the same temperature; assuming angular frequency in THz
     double h_o_KbT = h/(Kb*T)*1.e12, KbT_in_eV = Kb*T/eV;
 
@@ -548,7 +548,11 @@ void Phonon::therm()
     ZPE  /= eV*1.e-12;
     // output result under current temperature
     fprintf(fp,"%lg %lg %lg %lg %lg %lg\n", T, Uvib, Svib, Fvib, ZPE, Cvib);
-  }
+
+    printf("Please input the desired temperature (K), enter to exit: ");
+    if (count_words(gets(str)) < 1) break;
+    T = atof(strtok(str," \t\n\r\f"));
+  } while (T > 0.);
   fclose(fp);
 
 return;
@@ -607,78 +611,114 @@ void Phonon::QMesh()
   if ((method == 2) && (atpos == NULL)){
     atpos = memory->create_2d_double_array(dynmat->nucell,3,"phonon_ldos_egv:atpos");
     attyp = new int [dynmat->nucell];
+    for (int i=0; i<dynmat->nucell; i++)
+    for (int idim=0; idim<3; idim++) atpos[i][idim] = 0.;
+    for (int i=0; i<3; i++) latvec[i][i] = 1.;
 
-    int latsrc = 1;
-    printf("\nPlease select the way to provide the unit cell info:\n");
-    printf("  1. By file;\n  2. Read in.\nYour choice [1]: ");
-    if (count_words(gets(str)) > 0) latsrc = atoi(strtok(str," \t\n\r\f"));
-    latsrc = 2-latsrc%2;
-    /*----------------------------------------------------------------
-     * Ask for lattice info from the user; the format of the file is:
-     * A1_x A1_y A1_z
-     * A2_x A2_y A2_z
-     * A3_x A3_y A3_z
-     * natom
-     * Type_1 sx_1 sy_1 sz_1
-     * ...
-     * Type_n sx_n sy_n sz_n
-     *----------------------------------------------------------------*/
-    if (latsrc == 1){
-      do printf("Please input the file name containing the unit cell info: ");
-      while (count_words(gets(str)) < 1);
-      char *fname = strtok(str," \t\n\r\f");
-      FILE *fp = fopen(fname,"r"); fname = NULL;
+    int flag_lat_info_read = dynmat->flag_latinfo;
 
-      if (fp == NULL) latsrc = 2;
-      else {
-        for (int i=0; i<3; i++){
-          if (fgets(str,MAXLINE,fp) == NULL) {latsrc = 2; break;}
-          sscanf(str,"%lg %lg %lg", &latvec[i][0], &latvec[i][1], &latvec[i][2]);
-        }
-        if (fgets(str,MAXLINE,fp) == NULL) latsrc = 2;
+    if ( flag_lat_info_read ){ // get unit cell info from binary file; done by dynmat
+      num_atom = dynmat->nucell;
+      // set default, in case system dimension under study is not 3.
+      for (int i=0; i<dynmat->nucell; i++)
+      for (int idim=0; idim<3; idim++) atpos[i][idim] = 0.;
+      for (int i=0; i<3; i++) latvec[i][i] = 1.;
+
+      // get atomic type info
+      for (int i=0; i<num_atom; i++) attyp[i] = dynmat->attyp[i];
+      // get unit cell vector info
+      int ndim = 0;
+      for (int idim=0; idim<3; idim++)
+      for (int jdim=0; jdim<3; jdim++) latvec[idim][jdim] = dynmat->basevec[ndim++];
+      // get atom position in unit cell; fractional
+      for (int i=0; i<num_atom; i++)
+      for (int idim=0; idim<sysdim; idim++) atpos[i][idim] = dynmat->basis[i][idim];
+
+      // display the unit cell info read
+      printf("\n");for (int ii=0; ii<60; ii++) printf("="); printf("\n");
+      printf("The basis vectors of the unit cell:\n");
+      for (int idim=0; idim<3; idim++) printf("A%d = %lg %lg %lg\n", idim+1, latvec[idim][0], latvec[idim][1], latvec[idim][2]);
+      printf("Atom(s) in the unit cell:\n");
+      printf(" No.  type  sx  sy sz\n");
+      for (int i=0; i<num_atom; i++) printf("%d %d %lg %lg %lg\n", i+1, attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
+      printf("\nIs the above info correct? (y/n)[y]: ");
+      if ( (strlen(gets(str)) > 0) && ( (strcmp(str,"y") != 0) || (strcmp(str,"Y") != 0)) ) flag_lat_info_read = 0;
+    }
+
+    if (flag_lat_info_read == 0) { // get unit cell info from file or user input
+      int latsrc = 1;
+      printf("\nPlease select the way to provide the unit cell info:\n");
+      printf("  1. By file;\n  2. Read in.\nYour choice [1]: ");
+      if (count_words(gets(str)) > 0) latsrc = atoi(strtok(str," \t\n\r\f"));
+      latsrc = 2-latsrc%2;
+      /*----------------------------------------------------------------
+       * Ask for lattice info from the user; the format of the file is:
+       * A1_x A1_y A1_z
+       * A2_x A2_y A2_z
+       * A3_x A3_y A3_z
+       * natom
+       * Type_1 sx_1 sy_1 sz_1
+       * ...
+       * Type_n sx_n sy_n sz_n
+       *----------------------------------------------------------------*/
+      if (latsrc == 1){ // to read unit cell info from file; get file name first
+        do printf("Please input the file name containing the unit cell info: ");
+        while (count_words(gets(str)) < 1);
+        char *fname = strtok(str," \t\n\r\f");
+        FILE *fp = fopen(fname,"r"); fname = NULL;
+  
+        if (fp == NULL) latsrc = 2;
         else {
-          num_atom = atoi(strtok(str," \t\n\r\f"));
-          if (num_atom > dynmat->nucell){
-            printf("\nError: # of atoms read from file (%d) is bigger than that given by the dynamical matrix (%d)!\n", num_atom, dynmat->nucell);
-            return;
+          for (int i=0; i<3; i++){ // read unit cell vector info; # of atoms per unit cell
+            if (fgets(str,MAXLINE,fp) == NULL) {latsrc = 2; break;}
+            sscanf(str,"%lg %lg %lg", &latvec[i][0], &latvec[i][1], &latvec[i][2]);
           }
-    
-          for (int i=0; i<num_atom; i++){
-            if (fgets(str,MAXLINE,fp) == NULL) latsrc = 2;
-            else sscanf(str,"%d %lg %lg %lg",&attyp[i],&atpos[i][0],&atpos[i][1],&atpos[i][2]);
+          if (fgets(str,MAXLINE,fp) == NULL) latsrc = 2;
+          else {
+            num_atom = atoi(strtok(str," \t\n\r\f"));
+            if (num_atom > dynmat->nucell){
+              printf("\nError: # of atoms read from file (%d) is bigger than that given by the dynamical matrix (%d)!\n", num_atom, dynmat->nucell);
+              return;
+            }
+      
+            for (int i=0; i<num_atom; i++){ // read atomic type and fractional positions
+              if (fgets(str,MAXLINE,fp) == NULL) latsrc = 2;
+              else sscanf(str,"%d %lg %lg %lg",&attyp[i],&atpos[i][0],&atpos[i][1],&atpos[i][2]);
+            }
           }
         }
+        fclose(fp);
       }
-      fclose(fp);
-    }
-    if (latsrc == 2){
-      for (int i=0; i<3; i++){
-        do printf("Please input the vector A%d: ", i+1);
-        while (count_words(gets(str)) < 3);
-        latvec[i][0] = atof(strtok(str," \t\n\r\f"));
-        latvec[i][1] = atof(strtok(NULL," \t\n\r\f"));
-        latvec[i][2] = atof(strtok(NULL," \t\n\r\f"));
+      if (latsrc == 2){
+        for (int i=0; i<3; i++){
+          do printf("Please input the vector A%d: ", i+1);
+          while (count_words(gets(str)) < 3);
+          latvec[i][0] = atof(strtok(str," \t\n\r\f"));
+          latvec[i][1] = atof(strtok(NULL," \t\n\r\f"));
+          latvec[i][2] = atof(strtok(NULL," \t\n\r\f"));
+        }
+  
+        do printf("please input the number of atoms per unit cell: ");
+        while (count_words(gets(str)) < 1);
+        num_atom = atoi(strtok(str," \t\n\r\f"));
+        if (num_atom > dynmat->nucell){
+          printf("\nError: # of atoms input (%d) is bigger than that given by the dynamical matrix (%d)!\n", num_atom, dynmat->nucell);
+          return;
+        }
+  
+        for (int i=0; i<num_atom; i++){
+          do printf("Please input the type, and fractional coordinate of atom No.%d: ", i+1);
+          while (count_words(gets(str)) < 4);
+          attyp[i] = atoi(strtok(str," \t\n\r\f"));
+  
+          atpos[i][0] = atof(strtok(NULL," \t\n\r\f"));
+          atpos[i][1] = atof(strtok(NULL," \t\n\r\f"));
+          atpos[i][2] = atof(strtok(NULL," \t\n\r\f"));
+        }
       }
+    } // end of read from file or input
+  } // end of if (method == 2 && ...
 
-      do printf("please input the number of atoms per unit cell: ");
-      while (count_words(gets(str)) < 1);
-      num_atom = atoi(strtok(str," \t\n\r\f"));
-      if (num_atom > dynmat->nucell){
-        printf("\nError: # of atoms input (%d) is bigger than that given by the dynamical matrix (%d)!\n", num_atom, dynmat->nucell);
-        return;
-      }
-
-      for (int i=0; i<num_atom; i++){
-        do printf("Please input the type, and fractional coordinate of atom No.%d: ", i+1);
-        while (count_words(gets(str)) < 4);
-        attyp[i] = atoi(strtok(str," \t\n\r\f"));
-
-        atpos[i][0] = atof(strtok(NULL," \t\n\r\f"));
-        atpos[i][1] = atof(strtok(NULL," \t\n\r\f"));
-        atpos[i][2] = atof(strtok(NULL," \t\n\r\f"));
-      }
-    }
-  }
   if (method == 2){
     int mesh[3], shift[3], is_time_reversal = 0;
     mesh[0] = nx; mesh[1] = ny; mesh[2] = nz;

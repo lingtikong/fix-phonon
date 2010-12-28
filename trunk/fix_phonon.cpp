@@ -145,13 +145,15 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   Rnow  = memory->create_2d_double_array(MAX(1,mynpt),fft_dim,"fix_phonon:Rnow");
   Rsum  = memory->create_2d_double_array(MAX(1,mynpt),fft_dim,"fix_phonon:Rsum");
 
+  basis = memory->create_2d_double_array(nucell, sysdim, "fix_phonon:basis");
+
   // because of hermit, only nearly half of q points are stored
   Rqnow = create_2d_complex_array(MAX(1,mynq),fft_dim, "fix_phonon:Rqnow");
   Rqsum = create_2d_complex_array(MAX(1,mynq),fft_dim2,"fix_phonon:Rqsum");
   Phi_q = create_2d_complex_array(MAX(1,mynq),fft_dim2,"fix_phonon:Phi_q");
 
   if (me == 0) // variable to collect all local Phi to root
-    Phi_all = create_2d_complex_array(nx*ny*nz,fft_dim2,"fix_phonon:Phi_all");
+    Phi_all = create_2d_complex_array(ntotal,fft_dim2,"fix_phonon:Phi_all");
   else
     Phi_all = create_2d_complex_array(1,1,"fix_phonon:Phi_all");
 
@@ -217,6 +219,8 @@ FixPhonon::~FixPhonon()
   memory->destroy_2d_double_array(Rnow);
   memory->destroy_2d_double_array(Rsum);
 
+  memory->destroy_2d_double_array(basis);
+
   destroy_2d_complex_array(Rqnow);
   destroy_2d_complex_array(Rqsum);
   destroy_2d_complex_array(Phi_q);
@@ -231,6 +235,7 @@ FixPhonon::~FixPhonon()
   delete []id_temp;
   delete []TempSum;
   delete []M_inv_sqrt;
+  delete []basetype;
 
   // destroy FFT
   delete fft;
@@ -268,6 +273,11 @@ void FixPhonon::init()
   for (int i=0; i<mynq; i++){
     for (int j=0; j<fft_dim2; j++) Rqsum[i][j] = std::complex<double> (0.,0.);
   }
+  for (int i=0; i<6; i++) hsum[i] = 0.;
+  for (int i=0; i<nucell; i++){
+    for (int j=0; j<sysdim; j++) basis[i][j] = 0.;
+  }
+
   prev_nstep = update->ntimestep;
   GFcounter  = 0;
   ifreq      = 0;
@@ -380,6 +390,21 @@ void FixPhonon::end_of_step()
     }
   }
 
+  // get basis info
+  if (fft_dim > sysdim){
+    for (idx=0; idx<mynpt; idx++){
+      ndim = sysdim;
+      for (i=1; i<nucell; i++){
+        double dist2orig[3];
+        for (idim=0; idim<sysdim; idim++) dist2orig[idim] = Rnow[idx][ndim++] - Rnow[idx][idim];
+        domain->minimum_image(dist2orig);
+        for (idim=0; idim<sysdim; idim++) basis[i][idim] += dist2orig[idim];
+      }
+    }
+  }
+  // get lattice vector info
+  for (int i=0; i<6; i++) hsum[i] += h[i];
+
   // increment counter
   GFcounter++;
 
@@ -396,7 +421,7 @@ double FixPhonon::memory_usage()
                + sizeof(std::map<int,int>)*2*nGFatoms
                + sizeof(double)*(nGFatoms*(3*sysdim+2)+mynpt*fft_dim*2)
                + sizeof(std::complex<double>)*MAX(1,mynq)*fft_dim *(1+2*fft_dim)
-               + sizeof(std::complex<double>)*nx*ny*fft_dim2
+               + sizeof(std::complex<double>)*ntotal*fft_dim2
                + sizeof(int) * nprocs * 4;
   return bytes;
 }
@@ -437,10 +462,16 @@ void FixPhonon::getmass()
   double *rmass = atom->rmass;
   double *mass = atom->mass;
   double *mass_one, *mass_all;
+  double *type_one, *type_all;
 
   mass_one = new double[nucell];
   mass_all = new double[nucell];
-  for (int i=0; i<nucell; i++) mass_one[i] = 0.;
+  type_one = new double[nucell];
+  type_all = new double[nucell];
+  for (int i=0; i<nucell; i++) {
+    mass_one[i] = 0.;
+    type_one[i] = 0.;
+  }
 
   if (rmass){
     for (int i = 0; i < nlocal; i++){
@@ -449,6 +480,7 @@ void FixPhonon::getmass()
         idx  = tag2surf[itag];
         int iu = idx%nucell;
         mass_one[iu] += rmass[i];
+        type_one[iu] += double(type[i]);
       }
     }
   } else {
@@ -458,19 +490,28 @@ void FixPhonon::getmass()
         idx  = tag2surf[itag];
         int iu = idx%nucell;
         mass_one[iu] += mass[type[i]];
+        type_one[iu] += double(type[i]);
       }
     }
   }
 
   MPI_Allreduce(mass_one,mass_all,nucell,MPI_DOUBLE,MPI_SUM,world);
+  MPI_Allreduce(type_one,type_all,nucell,MPI_DOUBLE,MPI_SUM,world);
 
   M_inv_sqrt = new double[nucell];
+  basetype   = new int[nucell];
+
+  double inv_total = 1./double(ntotal);
   for (int i=0; i<nucell; i++){
-    mass_all[i] /= double(nx*ny*nz);
+    mass_all[i] *= inv_total;
     M_inv_sqrt[i] = sqrt(1./mass_all[i]);
+
+    basetype[i] = int(type_all[i]*inv_total);
   }
   delete []mass_one;
   delete []mass_all;
+  delete []type_one;
+  delete []type_all;
 
   return;
 }
@@ -496,7 +537,8 @@ void FixPhonon::readmap()
   if (fgets(strtmp,MAXLINE,fp) == NULL)
     error->all("fix phonon: Error while reading header of mapping file!");
   sscanf(strtmp,"%d %d %d %d", &nx, &ny, &nz, &nucell);
-  if (nx*ny*nz*nucell != nGFatoms) error->all("fix phonon: FFT mesh and number of atoms in group mismatch!");
+  ntotal = nx*ny*nz;
+  if (ntotal*nucell != nGFatoms) error->all("fix phonon: FFT mesh and number of atoms in group mismatch!");
   
   if (fgets(strtmp,MAXLINE,fp) == NULL)    // second line of mapfile is comment
     error->all("fix phonon: Error while reading comment of mapping file!");
@@ -582,7 +624,7 @@ void FixPhonon::postprocess( )
   // to get Phi = KT.G^-1; normalization of FFTW data is done here
   double boltz = force->boltz, kbtsqrt[sysdim], TempAve = 0.;
   double TempFac = invGFcounter*inv_nTemp;
-  double NormFac = TempFac*nx*ny*nz;
+  double NormFac = TempFac*double(ntotal);
 
   for (idim=0; idim<sysdim; idim++){
     kbtsqrt[idim] = sqrt(TempSum[idim]*NormFac);
@@ -618,8 +660,26 @@ void FixPhonon::postprocess( )
   for (int i=1; i<nprocs; i++) displs[i] = displs[i-1] + recvcnts[i-1];
   MPI_Gatherv(Phi_q[0],mynq*fft_dim2*2,MPI_DOUBLE,Phi_all[0],recvcnts,displs,MPI_DOUBLE,0,world);
   
+  // to collect all basis info and averaged it on root
+  double basis_root[fft_dim];
+  if (fft_dim > sysdim)
+    MPI_Reduce (&basis[1][0], &basis_root[sysdim], fft_dim-sysdim, MPI_DOUBLE, MPI_SUM, 0, world);
+
   if (me == 0){ // output dynamic matrix by root
 
+    // get basis info
+    for (idim=0;      idim<sysdim;  idim++) basis_root[idim]  = 0.;
+    for (idim=sysdim; idim<fft_dim; idim++) basis_root[idim] /= double(ntotal)*double(GFcounter);
+    // get unit cell base vector info
+    double basevec[9];
+    basevec[1] = basevec[2] = basevec[5] = 0.;
+    basevec[0] = hsum[0] * invGFcounter;
+    basevec[4] = hsum[1] * invGFcounter;
+    basevec[8] = hsum[2] * invGFcounter;
+    basevec[7] = hsum[3] * invGFcounter;
+    basevec[6] = hsum[4] * invGFcounter;
+    basevec[3] = hsum[5] * invGFcounter;
+    
     // write binary file
     char fname[MAXLINE];
     FILE *GFC_bin;
@@ -634,7 +694,12 @@ void FixPhonon::postprocess( )
     fwrite(&nucell, sizeof(int),    1, GFC_bin);
     fwrite(&boltz,  sizeof(double), 1, GFC_bin);
 
-    fwrite(Phi_all[0],sizeof(double),nx*ny*nz*fft_dim2*2,GFC_bin);
+    fwrite(Phi_all[0],sizeof(double),ntotal*fft_dim2*2,GFC_bin);
+
+    fwrite(&TempAve,      sizeof(double),1,      GFC_bin);
+    fwrite(&basevec[0],   sizeof(double),9,      GFC_bin);
+    fwrite(&basis_root[0],sizeof(double),fft_dim,GFC_bin);
+    fwrite(basetype,      sizeof(int),   nucell, GFC_bin);
 
     fclose(GFC_bin);
 
@@ -644,6 +709,9 @@ void FixPhonon::postprocess( )
     fprintf(flog, "# Total number of measurements           : %d\n", GFcounter);
     fprintf(flog, "# Average temperature of the measurement : %lg\n", TempAve);
     fprintf(flog, "# Boltzmann constant under current units : %lg\n", boltz);
+    fprintf(flog, "# basis vector A1 = [%lg %lg %lg]\n", basevec[0], basevec[1], basevec[2]);
+    fprintf(flog, "# basis vector A2 = [%lg %lg %lg]\n", basevec[3], basevec[4], basevec[5]);
+    fprintf(flog, "# basis vector A3 = [%lg %lg %lg]\n", basevec[6], basevec[7], basevec[8]);
     for (int i=0; i<60; i++) fprintf(flog,"#"); fprintf(flog,"\n");
     fprintf(flog, "# qx\t qy \t qz \t\t Phi(q)\n");
 

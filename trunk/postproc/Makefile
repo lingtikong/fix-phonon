@@ -2,9 +2,9 @@
 # compiler and flags
 CC     = g++
 LINK   = $(CC) -static
-CFLAGS = -O $(DEBUG) $(UFLAG)
+CFLAGS = -O3 $(DEBUG) $(UFLAG)
 #
-OFLAGS = -O $(DEBUG)
+OFLAGS = -O3 $(DEBUG)
 INC    = $(LPKINC) $(TCINC) $(SPGINC)
 LIB    = $(LPKLIB) $(TCLIB) $(SPGLIB)
 #
