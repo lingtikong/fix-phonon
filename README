@@ -16,6 +16,9 @@ For installation, please refer to file INSTALL.
 
 For usage, please check the doc and example directories.
 
+NOTE: This package won't work if LAMMPS is compiled as serial version
+      with the mpi library in src/STUBS, as this mpi library is not
+      complete and the functions FixPhonon needed are not implemented.
 
 Author: Ling-Ti Kong, konglt@sjtu.edu.cn
 version: 0.12 / Sep 2010

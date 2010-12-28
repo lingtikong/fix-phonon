@@ -2,6 +2,7 @@
 
 Timer::Timer()
 {
+  flag = 0;
   start();
 return;
 }

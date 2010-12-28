@@ -31,6 +31,11 @@ public:
 
   doublecomplex **DM_q;
 
+  int flag_latinfo;
+  double Tmeasure, basevec[9];
+  double **basis;
+  int *attyp;
+
 private:
 
   Interpolate *interpolate;
@@ -43,5 +48,6 @@ private:
 
   doublecomplex **DM_all;
 
+  void car2dir(); // to convert basis from cartisian coordinate into factional.
 };
 #endif

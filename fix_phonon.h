@@ -55,7 +55,7 @@ class FixPhonon : public Fix {
   int waitsteps;                                // wait these number of timesteps before recording atom positions
   int nfreq, ifreq;                             // after this number of measurement (nfreq), the result will be output once
   int prev_nstep;                               // number of steps from previous run(s); to judge if waitsteps is reached.
-  int nx,ny,nz,nucell;                          // surface dimensions in x- and y-direction, number of atom per unit surface cell
+  int nx,ny,nz,nucell,ntotal;                   // surface dimensions in x- and y-direction, number of atom per unit surface cell
   int GFcounter;                                // counter variables
   int sysdim;                                   // system dimension
   int nGFatoms, nfind;                          // total number of GF atoms; total number of GF atom on this proc
@@ -100,6 +100,9 @@ class FixPhonon : public Fix {
   double *TempSum;                              // to get the average temperature vector
   double inv_nTemp;                             // inverse of number of atoms in temperature group
   class Compute *temperature;                   // compute that computes the temperature
+
+  double hsum[6], **basis;
+  int *basetype;
 
   // private methods to do matrix inversion
   void GaussJordan(int, std::complex<double>*);
