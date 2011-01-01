@@ -85,6 +85,7 @@ Phonon::~Phonon()
   if (wt)  delete []wt;
   
   if (locals) delete []locals;
+
   if (dos) delete []dos;
   if (ldos) memory->destroy_3d_double_array(ldos);
 
@@ -158,8 +159,6 @@ void Phonon::pdos()
 
   // output DOS
   writeDOS();
-
-  delete []dos;
 
 return;
 }
@@ -622,14 +621,14 @@ void Phonon::QMesh()
       // set default, in case system dimension under study is not 3.
       for (int i=0; i<dynmat->nucell; i++)
       for (int idim=0; idim<3; idim++) atpos[i][idim] = 0.;
-      for (int i=0; i<3; i++) latvec[i][i] = 1.;
+      //for (int i=0; i<3; i++) latvec[i][i] = 1.;
 
       // get atomic type info
       for (int i=0; i<num_atom; i++) attyp[i] = dynmat->attyp[i];
       // get unit cell vector info
       int ndim = 0;
       for (int idim=0; idim<3; idim++)
-      for (int jdim=0; jdim<3; jdim++) latvec[idim][jdim] = dynmat->basevec[ndim++];
+      for (int jdim=0; jdim<3; jdim++) latvec[jdim][idim] = dynmat->basevec[ndim++];
       // get atom position in unit cell; fractional
       for (int i=0; i<num_atom; i++)
       for (int idim=0; idim<sysdim; idim++) atpos[i][idim] = dynmat->basis[i][idim];
@@ -637,10 +636,10 @@ void Phonon::QMesh()
       // display the unit cell info read
       printf("\n");for (int ii=0; ii<60; ii++) printf("="); printf("\n");
       printf("The basis vectors of the unit cell:\n");
-      for (int idim=0; idim<3; idim++) printf("A%d = %lg %lg %lg\n", idim+1, latvec[idim][0], latvec[idim][1], latvec[idim][2]);
+      for (int idim=0; idim<3; idim++) printf("  A%d = %lg %lg %lg\n", idim+1, latvec[0][idim], latvec[1][idim], latvec[2][idim]);
       printf("Atom(s) in the unit cell:\n");
-      printf(" No.  type  sx  sy sz\n");
-      for (int i=0; i<num_atom; i++) printf("%d %d %lg %lg %lg\n", i+1, attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
+      printf("  No.  type  sx  sy sz\n");
+      for (int i=0; i<num_atom; i++) printf("  %d %d %lg %lg %lg\n", i+1, attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
       printf("\nIs the above info correct? (y/n)[y]: ");
       if ( (strlen(gets(str)) > 0) && ( (strcmp(str,"y") != 0) || (strcmp(str,"Y") != 0)) ) flag_lat_info_read = 0;
     }
@@ -671,7 +670,7 @@ void Phonon::QMesh()
         else {
           for (int i=0; i<3; i++){ // read unit cell vector info; # of atoms per unit cell
             if (fgets(str,MAXLINE,fp) == NULL) {latsrc = 2; break;}
-            sscanf(str,"%lg %lg %lg", &latvec[i][0], &latvec[i][1], &latvec[i][2]);
+            sscanf(str,"%lg %lg %lg", &latvec[0][i], &latvec[1][i], &latvec[2][i]);
           }
           if (fgets(str,MAXLINE,fp) == NULL) latsrc = 2;
           else {
@@ -693,9 +692,9 @@ void Phonon::QMesh()
         for (int i=0; i<3; i++){
           do printf("Please input the vector A%d: ", i+1);
           while (count_words(gets(str)) < 3);
-          latvec[i][0] = atof(strtok(str," \t\n\r\f"));
-          latvec[i][1] = atof(strtok(NULL," \t\n\r\f"));
-          latvec[i][2] = atof(strtok(NULL," \t\n\r\f"));
+          latvec[0][i] = atof(strtok(str," \t\n\r\f"));
+          latvec[1][i] = atof(strtok(NULL," \t\n\r\f"));
+          latvec[2][i] = atof(strtok(NULL," \t\n\r\f"));
         }
   
         do printf("please input the number of atoms per unit cell: ");
