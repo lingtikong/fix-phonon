@@ -243,6 +243,12 @@ return;
  * ---------------------------------------------------------------------------- */
 void DynMat::car2dir()
 {
+  for (int i=0; i<3; i++){
+    basevec[i]   /= double(nx);
+    basevec[i+3] /= double(ny);
+    basevec[i+6] /= double(nz);
+  }
+
   if (sysdim == 1){
     double h_inv = 1./basevec[0];
     for (int i=0; i<nucell; i++) basis[i][0] *= h_inv;
