@@ -57,7 +57,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   nfreq  = atoi(arg[4]);   // frequency to output result
   if (nfreq <=0) error->all("Illegal fix phonon command");
 
-  waitsteps = atoi(arg[5]); // Wait this many timesteps before actually measuring
+  waitsteps = ATOBIGINT(arg[5]); // Wait this many timesteps before actually measuring
   if (waitsteps < 0) error->all("fix phonon: waitsteps < 0 ! Please provide non-negative number!");
 
   int n = strlen(arg[6]) + 1; // map file
@@ -138,24 +138,24 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   fft_data = (double *) memory->smalloc(MAX(1,mynq)*2*sizeof(double),"fix_phonon:fft_data");
 
   // allocate variables; MAX(1,... is used because NULL buffer will result in error for MPI
-  RIloc = memory->create_2d_double_array(nGFatoms,(sysdim+1),"fix_phonon:RIloc");
-  RIall = memory->create_2d_double_array(nGFatoms,(sysdim+1),"fix_phonon:RIall");
-  Rsort = memory->create_2d_double_array(nGFatoms, sysdim, "fix_phonon:Rsort");
-
-  Rnow  = memory->create_2d_double_array(MAX(1,mynpt),fft_dim,"fix_phonon:Rnow");
-  Rsum  = memory->create_2d_double_array(MAX(1,mynpt),fft_dim,"fix_phonon:Rsum");
-
-  basis = memory->create_2d_double_array(nucell, sysdim, "fix_phonon:basis");
+  RIloc = memory->create(RIloc,nGFatoms,(sysdim+1),"fix_phonon:RIloc");
+  RIall = memory->create(RIall,nGFatoms,(sysdim+1),"fix_phonon:RIall");
+  Rsort = memory->create(Rsort,nGFatoms, sysdim, "fix_phonon:Rsort");
+                              
+  Rnow  = memory->create(Rnow, MAX(1,mynpt),fft_dim,"fix_phonon:Rnow");
+  Rsum  = memory->create(Rsum, MAX(1,mynpt),fft_dim,"fix_phonon:Rsum");
+                              
+  basis = memory->create(basis,nucell, sysdim, "fix_phonon:basis");
 
   // because of hermit, only nearly half of q points are stored
-  Rqnow = create_2d_complex_array(MAX(1,mynq),fft_dim, "fix_phonon:Rqnow");
-  Rqsum = create_2d_complex_array(MAX(1,mynq),fft_dim2,"fix_phonon:Rqsum");
-  Phi_q = create_2d_complex_array(MAX(1,mynq),fft_dim2,"fix_phonon:Phi_q");
+  Rqnow = memory->create(Rqnow,MAX(1,mynq),fft_dim, "fix_phonon:Rqnow");
+  Rqsum = memory->create(Rqsum,MAX(1,mynq),fft_dim2,"fix_phonon:Rqsum");
+  Phi_q = memory->create(Phi_q,MAX(1,mynq),fft_dim2,"fix_phonon:Phi_q");
 
   if (me == 0) // variable to collect all local Phi to root
-    Phi_all = create_2d_complex_array(ntotal,fft_dim2,"fix_phonon:Phi_all");
+    Phi_all = memory->create(Phi_all,ntotal,fft_dim2,"fix_phonon:Phi_all");
   else
-    Phi_all = create_2d_complex_array(1,1,"fix_phonon:Phi_all");
+    Phi_all = memory->create(Phi_all,1,1,"fix_phonon:Phi_all");
 
   // output some information on the system to log file
   if (me == 0){
@@ -171,7 +171,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
     fprintf(flog,"# dimension of the system                  : %d D\n", sysdim);
     fprintf(flog,"# number of atoms per unit cell            : %d\n", nucell);
     fprintf(flog,"# dimension of the FFT mesh                : %d x %d x %d\n", nx, ny, nz);
-    fprintf(flog,"# number of wait steps before measurement  : %d\n", waitsteps);
+    fprintf(flog,"# number of wait steps before measurement  : " BIGINT_FORMAT "\n", waitsteps);
     fprintf(flog,"# frequency of GFC measurement             : %d\n", nevery);
     fprintf(flog,"# output result after this many measurement: %d\n", nfreq);
     fprintf(flog,"# number of processors used by this run    : %d\n", nprocs);
@@ -213,18 +213,18 @@ FixPhonon::~FixPhonon()
   if (me == 0) fclose(flog);
 
   // delete locally stored array
-  memory->destroy_2d_double_array(RIloc);
-  memory->destroy_2d_double_array(RIall);
-  memory->destroy_2d_double_array(Rsort);
-  memory->destroy_2d_double_array(Rnow);
-  memory->destroy_2d_double_array(Rsum);
+  memory->destroy(RIloc);
+  memory->destroy(RIall);
+  memory->destroy(Rsort);
+  memory->destroy(Rnow);
+  memory->destroy(Rsum);
 
-  memory->destroy_2d_double_array(basis);
+  memory->destroy(basis);
 
-  destroy_2d_complex_array(Rqnow);
-  destroy_2d_complex_array(Rqsum);
-  destroy_2d_complex_array(Phi_q);
-  destroy_2d_complex_array(Phi_all);
+  memory->destroy(Rqnow);
+  memory->destroy(Rqsum);
+  memory->destroy(Phi_q);
+  memory->destroy(Phi_all);
 
   delete []recvcnts;
   delete []displs;
@@ -670,7 +670,7 @@ void FixPhonon::postprocess( )
     // get basis info
     for (idim=0;      idim<sysdim;  idim++) basis_root[idim]  = 0.;
     for (idim=sysdim; idim<fft_dim; idim++) basis_root[idim] /= double(ntotal)*double(GFcounter);
-    // get unit cell base vector info
+    // get unit cell base vector info; might be incorrect if MD pbc and FixPhonon pbc mismatch.
     double basevec[9];
     basevec[1] = basevec[2] = basevec[5] = 0.;
     basevec[0] = hsum[0] * invGFcounter;
@@ -684,7 +684,7 @@ void FixPhonon::postprocess( )
     char fname[MAXLINE];
     FILE *GFC_bin;
 
-    sprintf(fname,"%s.bin.%d",prefix,update->ntimestep);
+    sprintf(fname,"%s.bin." BIGINT_FORMAT,prefix,update->ntimestep);
     GFC_bin = fopen(fname,"wb");
 
     fwrite(&sysdim, sizeof(int),    1, GFC_bin);
@@ -705,7 +705,7 @@ void FixPhonon::postprocess( )
 
     // write log file
     for (int i=0; i<60; i++) fprintf(flog,"#"); fprintf(flog,"\n");
-    fprintf(flog, "# Current time step                      : %d\n", update->ntimestep);
+    fprintf(flog, "# Current time step                      : " BIGINT_FORMAT "\n", update->ntimestep);
     fprintf(flog, "# Total number of measurements           : %d\n", GFcounter);
     fprintf(flog, "# Average temperature of the measurement : %lg\n", TempAve);
     fprintf(flog, "# Boltzmann constant under current units : %lg\n", boltz);
@@ -733,36 +733,6 @@ void FixPhonon::postprocess( )
   }
 
 }   // end of postprocess
-
-/* ----------------------------------------------------------------------
- * private method, to allocate memory for 2d complex array; make use of
- * the corresponding methods in memory.
- * --------------------------------------------------------------------*/
-
-std::complex<double> **FixPhonon::create_2d_complex_array(int n1, int n2, const char *name)
-{
-  std::complex<double> *data   = (std::complex<double>  *) memory->smalloc(n1*n2*sizeof(std::complex<double>),name);
-  std::complex<double> **array = (std::complex<double> **) memory->smalloc(n1*sizeof(std::complex<double> *),name);
-
-  int n = 0;
-  for (int i = 0; i < n1; i++) {
-    array[i] = &data[n];
-    n += n2;
-  }
-  return array;
-}
-
-/* ----------------------------------------------------------------------
- * private method, to destroy memory allocated for 2d complex array;
- * make use of the corresponding methods in memory.
- * --------------------------------------------------------------------*/
-
-void FixPhonon::destroy_2d_complex_array(std::complex<double> **array)
-{
-  if (array == NULL) return;
-  memory->sfree(array[0]);
-  memory->sfree(array);
-}
 
 /* ----------------------------------------------------------------------
  * private method, to get the inverse of a complex matrix by means of

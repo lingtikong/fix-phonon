@@ -509,10 +509,10 @@ void Phonon::therm()
   printf("\nPlease input the filename to output thermal properties [therm.dat]:");
   if (strlen(gets(str)) < 1) strcpy(str, "therm.dat");
   char *fname = strtok(str," \t\n\r\f");
-  FILE *fp = fopen(fname, "w"); fname = NULL;
+  FILE *fp = fopen(fname, "a"); fname = NULL;
   // header line 
-  fprintf(fp,"#Temp  Uvib Svib Fvib ZPE Cvib\n");
-  fprintf(fp,"# K    eV   Kb   eV   eV  Kb\n");
+  fprintf(fp,"#Temp   Uvib    Svib     Fvib    ZPE      Cvib\n");
+  fprintf(fp,"# K      eV      Kb       eV      eV       Kb\n");
 
   // constants          J.s             J/K                J
   const double h = 6.62606896e-34, Kb = 1.380658e-23, eV = 1.60217733e-19;
@@ -641,7 +641,7 @@ void Phonon::QMesh()
       printf("  No.  type  sx  sy sz\n");
       for (int i=0; i<num_atom; i++) printf("  %d %d %lg %lg %lg\n", i+1, attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
       printf("\nIs the above info correct? (y/n)[y]: ");
-      if ( (strlen(gets(str)) > 0) && ( (strcmp(str,"y") != 0) || (strcmp(str,"Y") != 0)) ) flag_lat_info_read = 0;
+      if ( (strlen(gets(str)) > 0) && ( (strcmp(str,"y") != 0) && (strcmp(str,"Y") != 0)) ) flag_lat_info_read = 0;
     }
 
     if (flag_lat_info_read == 0) { // get unit cell info from file or user input
@@ -724,7 +724,7 @@ void Phonon::QMesh()
     shift[0] = shift[1] = shift[2] = 0;
     int num_grid = mesh[0]*mesh[1]*mesh[2];
     int grid_point[num_grid][3], map[num_grid];
-    double symprec = 1.e-5, pos[num_atom][3];
+    double symprec = 1.e-4, pos[num_atom][3];
 
     for (int i=0; i<num_atom; i++)
     for (int j=0; j<3; j++) pos[i][j] = atpos[i][j];
