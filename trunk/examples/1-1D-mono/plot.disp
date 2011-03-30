@@ -11,7 +11,7 @@ set yr [0:2.5]
 
 set format y '%.1f'
 set term post enha color 20
-set out 'pdisp.eps'
+set out 'pdisp2.eps'
 set key top left
 set xtics ("-{/Symbol p}/a" -0.5, "{/Symbol G}" 0.0, "{/Symbol p}/a" 0.5)
 set samples 101

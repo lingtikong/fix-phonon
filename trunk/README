@@ -14,11 +14,12 @@ in the file of src/Makefile before invoke `make yes-user-phonon`.
 
 For installation, please refer to file INSTALL.
 
-For usage, please check the doc and example directories.
+For usage, please check the doc and example directories. The postprocessing
+code is also provided in directory 'postproc'.
 
 NOTE: This package won't work if LAMMPS is compiled as serial version
       with the mpi library in src/STUBS, as this mpi library is not
       complete and the functions FixPhonon needed are not implemented.
 
 Author: Ling-Ti Kong, konglt@sjtu.edu.cn
-version: 0.12 / Sep 2010
+version: 1.11 / Apr 2011
