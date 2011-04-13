@@ -1,4 +1,3 @@
-#labels Usersguide
 #The format and the meaning of the map file
 
 = Introduction =
