@@ -1,0 +1,16 @@
+#Instruction on the installation of the post processing code "phana".
+
+= Introduction =
+
+Since the postprocessing code makes use of several libraries, it is frequently a difficult task for newbies of linux to install it from scratch. I will therefore illustrate the compilation procedure needed step by step, hope it will be of help to the users.
+
+
+= Details =
+
+*Step 1: Download the needed libraries*
+
+The postprocessing uses [http://www.netlib.org/clapack/ clapack], [http://orca.princeton.edu/francois/software/tricubic/ tricubic] and/or [http://spglib.sourceforge.net/ spglib]. They can be freely downloaded from their respective website or from the [http://code.google.com/p/fix-phonon/downloads/list Download] page of this site. The [http://www.netlib.org/clapack/ clapack] library is used to evaluate the eigenvalue problem of the dynamical matrice, the [http://orca.princeton.edu/francois/software/tricubic/ tricubic] library is used to interpolate the dynamical matrix from the measured ones, and the [http://spglib.sourceforge.net/ spglib] library is used to get the irreducible q-points for phonon density of states (PDOS) calculations.
+
+As a first step of the installation, one need to download these libraries from their respective website or the download page of this site.
+
+*Step 2: Installation of the libraries*
