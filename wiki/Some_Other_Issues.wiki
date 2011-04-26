@@ -1,0 +1,11 @@
+#List some known issues/restriction of fix-phonon
+
+
+  # *phonon dispersion calculations*
+In general, fix-phonon can be used in nvt or npt simulations. However, 
+one usually uses fix-phonon because one wants to calculate the phonon dispersion curves. For this purpose, one generally needs to use the primitive cell of the crystal under study as the building block of the simulation cell, which is usually non-orthogonal. LAMMPS requires that the tilt of the box should not be too large, thus might make a npt run frequently crash because of too large tilts. Therefore, in these situations, one is encouraged to use nvt while not npt.
+
+If one is interested in phonon density of states only, one can always uses an orthogonal box, whose building block is non-primitive.
+
+  # *fix-phonon for system with long range interaction*
+This might not be a problem, but I did not succeed with NaCl so far: the computed phonon frequencies disagreed with their experimental ones. Though it might be the problem of the underlying force field used, the disagreement in frequencies at the Gamma point suggests that there is something unrealistic with fix-phonon.
