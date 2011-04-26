@@ -1,0 +1,20 @@
+#Brief instruction on the installation of fix-phonon along with LAMMPS
+
+= Introduction =
+
+The installation of fix-phonon together with LAMMPS is pretty simple, there is no special requirement for fix-phonon other than those needed by LAMMPS. The following procedure will generally work for all.
+
+
+= Details =
+
+  # *Download [http://lammps.sandia.gov/ LAMMPS]*;
+  # *check out fix-phonon* under _src_ of LAMMPS:
+   svn checkout http://fix-phonon.googlecode.com/svn/trunk/ USER-PHONON
+  # *edit Makefile* under _src_, append "user-phonon" to the variable "PACKUSER";
+  # *make yes-standard*;
+  # *make yes-user-phonon*;
+  # *make your-platform*; here _your-platform_ should correspond to the correct Makefile under MAKE that work for your machine.
+
+Then everything should work for you. One can check the document under _USER-PHONON/doc_ as well as the examples in _USER-PHONON/Examples_ for the usage of fix-phonon.
+
+The postprocessing code locates in _USER-PHONON/postproc_, for the installation, check the README file and/or [http://code.google.com/p/fix-phonon/wiki/InstructionOnPostprocessingCode here]. 
