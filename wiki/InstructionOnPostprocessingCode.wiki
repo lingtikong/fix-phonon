@@ -47,7 +47,7 @@ Assuming the spglib will be installed under /opt/spglib/0.7.1; the digits denote
   # {{{tar -xzvf spglib-0.7.1.tar.gz}}}
   # {{{./configure  --prefix=/opt/spglib/0.7.1}}}
   # {{{make}}}
-  # {{{make install}}  (needs root)
+  # {{{make install}}}  (needs root)
 
 ----
 *Step 3: compiling the post-processing code*
