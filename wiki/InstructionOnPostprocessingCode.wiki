@@ -14,3 +14,47 @@ The postprocessing uses [http://www.netlib.org/clapack/ clapack], [http://orca.p
 As a first step of the installation, one need to download these libraries from their respective website or the download page of this site.
 
 *Step 2: Installation of the libraries*
+  *cLapack
+Assuming that you want to install clapack under /opt/clapack/3.x.y (x, y depends on the version number of cLapack).
+  # download [http://www.netlib.org/clapack/  clapack]
+  # {{{tar -xzvf clapack.tgz}}}
+  # {{{cd CLAPACK-3.2.1}}}
+  # {{{cp make.inc.example make.inc   }}} (make modification if necessary)
+  # {{{cd BLAS; make}}}
+  # {{{cd ..; make}}}
+  # {{{mkdir -p /opt/clapack/3.2.1/lib   }}}   (needs root from now on)
+  # {{{cp *.a /opt/clapack/3.2.1/lib}}}
+  # {{{cp -r INCLUDE /opt/clapack/3.2.1/include}}}
+  # {{{cd /opt/clapack/3.2.1/lib}}}
+  # {{{ln -s lapack_LINUX.a libclapack.a}}}
+  # {{{ln -s blas_LINUX.a libblas.a}}}
+
+----
+ 
+  * Tricubic
+Assuming you plans to install tricubic under /opt/tricubic/1.0 (version number may differ).
+  # download [http://orca.princeton.edu/francois/software/tricubic/ tricubic]
+  # {{{tar -xzvf tricubic-1.0.tgz}}}
+  # {{{./configure --prefix=/opt/tricubic/1.0}}}
+  # {{{make}}}
+  # {{{make install}}}  (needs root)
+
+----
+
+  * SPGLIB
+Assuming the spglib will be installed under /opt/spglib/0.7.1; the digits denotes the version numbers.
+  # download [http://spglib.sourceforge.net SPGLIB] (I noticed they have new version available, but I did not test it yet.)
+  # {{{tar -xzvf spglib-0.7.1.tar.gz}}}
+  # {{{./configure  --prefix=/opt/spglib/0.7.1}}}
+  # {{{make}}}
+  # {{{make install}}  (needs root)
+
+----
+*Step 3: compiling the post-processing code*
+
+Then everything should work, and what you need to do is simple type
+{{{make}}}
+under {{{USER-PHONON/postproc}}}. Once the executable is generated, you can copy it to your bin-directory or make a soft link.
+
+Enjoy it :)
+----
