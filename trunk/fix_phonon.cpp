@@ -52,10 +52,10 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   if (narg < 8) error->all("Illegal fix phonon command: number of arguments < 8");
 
   nevery = atoi(arg[3]);   // Calculate this fix every n steps!
-  if (nevery <= 0) error->all("Illegal fix phonon command");
+  if (nevery < 1) error->all("Illegal fix phonon command");
 
   nfreq  = atoi(arg[4]);   // frequency to output result
-  if (nfreq <=0) error->all("Illegal fix phonon command");
+  if (nfreq < 1) error->all("Illegal fix phonon command");
 
   waitsteps = ATOBIGINT(arg[5]); // Wait this many timesteps before actually measuring
   if (waitsteps < 0) error->all("fix phonon: waitsteps < 0 ! Please provide non-negative number!");
@@ -72,15 +72,18 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   
   int sdim = 4;
   int iarg = 8;
-  nasr = 10;
+  nasr = 20;
+
   // other command line options
   while (iarg < narg){
     if (strcmp(arg[iarg],"sysdim") == 0){
       if (++iarg >= narg) error->all("Illegal fix phonon command: incomplete command line options.");
       sdim = atoi(arg[iarg]);
+
     } else if (strcmp(arg[iarg],"nasr") == 0){
       if (++iarg >= narg) error->all("Illegal fix phonon command: incomplete command line options.");
       nasr = atoi(arg[iarg]);
+
     } else {
       error->all("fix phonon: unknown option read!");
     }
@@ -577,7 +580,7 @@ void FixPhonon::readmap()
 }
 
 /* ----------------------------------------------------------------------
- * private method, to get the elastic stiffness coefficients.
+ * private method, to output the force constant matrix
  * --------------------------------------------------------------------*/
 
 void FixPhonon::postprocess( )
@@ -642,18 +645,6 @@ void FixPhonon::postprocess( )
     }
   }
 
-  if (me == 0) EnforceASR();
-
-  // to get D = 1/M x Phi
-  for (idq=0; idq<mynq; idq++){
-    ndim =0;
-    for (idim=0; idim<fft_dim; idim++){
-      for (jdim=0; jdim<fft_dim; jdim++){
-        Phi_q[idq][ndim++] *= M_inv_sqrt[idim/sysdim]*M_inv_sqrt[jdim/sysdim];
-      }
-    }
-  }
-
   // to collect all local Phi_q to root
   displs[0]=0;
   for (int i=0; i<nprocs; i++) recvcnts[i] = fft_cnts[i]*fft_dim*2;
@@ -673,14 +664,15 @@ void FixPhonon::postprocess( )
     // get unit cell base vector info; might be incorrect if MD pbc and FixPhonon pbc mismatch.
     double basevec[9];
     basevec[1] = basevec[2] = basevec[5] = 0.;
-    basevec[0] = hsum[0] * invGFcounter;
-    basevec[4] = hsum[1] * invGFcounter;
-    basevec[8] = hsum[2] * invGFcounter;
-    basevec[7] = hsum[3] * invGFcounter;
-    basevec[6] = hsum[4] * invGFcounter;
-    basevec[3] = hsum[5] * invGFcounter;
+    basevec[0] = hsum[0] * invGFcounter / double(nx);
+    basevec[4] = hsum[1] * invGFcounter / double(ny);
+    basevec[8] = hsum[2] * invGFcounter / double(nz);
+    basevec[7] = hsum[3] * invGFcounter / double(nz);
+    basevec[6] = hsum[4] * invGFcounter / double(nz);
+    basevec[3] = hsum[5] * invGFcounter / double(ny);
     
-    // write binary file
+    // write binary file, in fact, it is the force constants matrix that is written
+    // Enforcement of ASR and the conversion of dynamical matrix is done in the postprocessing code
     char fname[MAXLINE];
     FILE *GFC_bin;
 
@@ -700,10 +692,11 @@ void FixPhonon::postprocess( )
     fwrite(&basevec[0],   sizeof(double),9,      GFC_bin);
     fwrite(&basis_root[0],sizeof(double),fft_dim,GFC_bin);
     fwrite(basetype,      sizeof(int),   nucell, GFC_bin);
+    fwrite(M_inv_sqrt,    sizeof(double),nucell, GFC_bin);
 
     fclose(GFC_bin);
 
-    // write log file
+    // write log file, here however, it is the dynamical matrix that is written
     for (int i=0; i<60; i++) fprintf(flog,"#"); fprintf(flog,"\n");
     fprintf(flog, "# Current time step                      : " BIGINT_FORMAT "\n", update->ntimestep);
     fprintf(flog, "# Total number of measurements           : %d\n", GFcounter);
@@ -714,6 +707,18 @@ void FixPhonon::postprocess( )
     fprintf(flog, "# basis vector A3 = [%lg %lg %lg]\n", basevec[6], basevec[7], basevec[8]);
     for (int i=0; i<60; i++) fprintf(flog,"#"); fprintf(flog,"\n");
     fprintf(flog, "# qx\t qy \t qz \t\t Phi(q)\n");
+
+    EnforceASR();
+
+    // to get D = 1/M x Phi
+    for (idq=0; idq<ntotal; idq++){
+      ndim =0;
+      for (idim=0; idim<fft_dim; idim++){
+        for (jdim=0; jdim<fft_dim; jdim++){
+          Phi_all[idq][ndim++] *= M_inv_sqrt[idim/sysdim]*M_inv_sqrt[jdim/sysdim];
+        }
+      }
+    }
 
     idq =0;
     for (int ix=0; ix<nx; ix++){
@@ -821,7 +826,7 @@ return;
 
 /* ----------------------------------------------------------------------
  * private method, to apply the acoustic sum rule on force constant matrix
- * at gamma point.
+ * at gamma point. Should be executed on root only.
  * --------------------------------------------------------------------*/
 void FixPhonon::EnforceASR()
 {
@@ -835,12 +840,12 @@ void FixPhonon::EnforceASR()
         double sum = 0.;
         for (int kp=0; kp<nucell; kp++){
           int idx = (k*sysdim+a)*fft_dim+kp*sysdim+b;
-          sum += real(Phi_q[0][idx]);
+          sum += real(Phi_all[0][idx]);
         }
         sum /= double(nucell);
         for (int kp=0; kp<nucell; kp++){
           int idx = (k*sysdim+a)*fft_dim+kp*sysdim+b;
-          real(Phi_q[0][idx]) -= sum;
+          real(Phi_all[0][idx]) -= sum;
         }
       }
     }
@@ -853,8 +858,8 @@ void FixPhonon::EnforceASR()
       for (int b=0; b<sysdim; b++){
         int idx = (k*sysdim+a)*fft_dim+kp*sysdim+b;
         int jdx = (kp*sysdim+b)*fft_dim+k*sysdim+a;
-        csum = (real(Phi_q[0][idx])+real(Phi_q[0][jdx]))*0.5;
-        real(Phi_q[0][idx]) = real(Phi_q[0][jdx]) = csum;
+        csum = (real(Phi_all[0][idx])+real(Phi_all[0][jdx]))*0.5;
+        real(Phi_all[0][idx]) = real(Phi_all[0][jdx]) = csum;
       }
     }
   }
@@ -866,14 +871,14 @@ void FixPhonon::EnforceASR()
       double sum = 0.;
       for (int kp=0; kp<nucell; kp++){
         int idx = (k*sysdim+a)*fft_dim+kp*sysdim+b;
-        sum += real(Phi_q[0][idx]);
+        sum += real(Phi_all[0][idx]);
       }
       sum /= double(nucell-k);
       for (int kp=k; kp<nucell; kp++){
         int idx = (k*sysdim+a)*fft_dim+kp*sysdim+b;
         int jdx = (kp*sysdim+b)*fft_dim+k*sysdim+a;
-        real(Phi_q[0][idx]) -= sum;
-        real(Phi_q[0][jdx]) = real(Phi_q[0][idx]);
+        real(Phi_all[0][idx]) -= sum;
+        real(Phi_all[0][jdx]) = real(Phi_all[0][idx]);
       }
     }
   }

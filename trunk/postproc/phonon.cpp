@@ -317,7 +317,7 @@ void Phonon::pdisp()
     for (int i=0; i<3; i++) qstr[i] = qend[i];
 
     int quit = 0;
-    printf("\nPlease input the start q-point in unit of 2pi/L, q to exit [%g %g %g]: ", qstr[0], qstr[1], qstr[2]);
+    printf("\nPlease input the start q-point in unit of B1->B3, q to exit [%g %g %g]: ", qstr[0], qstr[1], qstr[2]);
     int nr = count_words(gets(str));
     if ((nr == 1) && (strcmp(str,"q") == 0)) break;
     else if (nr >= 3){
@@ -326,7 +326,7 @@ void Phonon::pdisp()
       qstr[2] = atof(strtok(NULL," \t\n\r\f"));
     }
 
-    do printf("Please input the end q-point in unit of 2pi/L: ");
+    do printf("Please input the end q-point in unit of B1->B3: ");
     while (count_words(gets(str)) < 3);
     qend[0] = atof(strtok(str," \t\n\r\f"));
     qend[1] = atof(strtok(NULL," \t\n\r\f"));
@@ -422,7 +422,7 @@ void Phonon::DMdisp()
 
     for (int i=0; i<3; i++) qstr[i] = qend[i];
 
-    printf("\nPlease input the start q-point in unit of 2pi/L, q to exit [%g %g %g]: ", qstr[0], qstr[1], qstr[2]);
+    printf("\nPlease input the start q-point in unit of B1->B3, q to exit [%g %g %g]: ", qstr[0], qstr[1], qstr[2]);
     int n = count_words(gets(str));
     if ((n == 1) && (strcmp(str,"q") == 0)) break;
     else if (n >= 3){
@@ -431,7 +431,7 @@ void Phonon::DMdisp()
       qstr[2] = atof(strtok(NULL," \t\n\r\f"));
     }
 
-    do printf("Please input the end q-point in unit of 2pi/L: ");
+    do printf("Please input the end q-point in unit of B1->B3: ");
     while (count_words(gets(str)) < 3);
     qend[0] = atof(strtok(str," \t\n\r\f"));
     qend[1] = atof(strtok(NULL," \t\n\r\f"));
