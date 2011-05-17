@@ -32,7 +32,7 @@ public:
   doublecomplex **DM_q;
 
   int flag_latinfo;
-  double Tmeasure, basevec[9];
+  double Tmeasure, basevec[9], ibasevec[9];
   double **basis;
   int *attyp;
 
@@ -43,11 +43,16 @@ private:
   Memory *memory;
   int npt, fftdim2;
 
+  int nasr;
+  void EnforceASR();
+
   char *binfile, *dmfile;
   double boltz, q[3];
+  double *M_inv_sqrt;
 
   doublecomplex **DM_all;
 
-  void car2dir(); // to convert basis from cartisian coordinate into factional.
+  void car2dir(int); // to convert basis from cartisian coordinate into factional.
+  void real2rec();
 };
 #endif

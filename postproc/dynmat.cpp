@@ -41,13 +41,13 @@ DynMat::DynMat(int narg, char **arg)
   npt = nx*ny*nz;
 
   // display info related to the read file
-  printf("\n"); for (int i=0; i<60; i++) printf("#"); printf("\n");
+  printf("\n"); for (int i=0; i<60; i++) printf("="); printf("\n");
   printf("Dynamical matrix is read from file: %s\n", binfile);
   printf("The system size in three dimension: %d x %d x %d\n", nx, ny, nz);
   printf("Number of atoms per unit cell     : %d\n", nucell);
   printf("System dimension                  : %d\n", sysdim);
   printf("Boltzmann constant in used units  : %g\n", boltz);
-  for (int i=0; i<60; i++) printf("#"); printf("\n\n");
+  for (int i=0; i<60; i++) printf("="); printf("\n");
   if (sysdim<1||sysdim>3||nx<1||ny<1||nz<1||nucell<1){
     printf("Wrong values read from header of file: %s, please check the binary file!\n", binfile);
     fclose(fp); exit(3);
@@ -81,19 +81,46 @@ DynMat::DynMat(int narg, char **arg)
   flag_latinfo = 0;
   basis = memory->create_2d_double_array(nucell,sysdim,"DynMat:basis");
   attyp = new int[nucell];
+  M_inv_sqrt = new double [nucell];
+  int flag_mass_read = 0;
   
   if ( fread(&Tmeasure,   sizeof(double), 1, fp) == 1) flag_latinfo |= 1;
   if ( fread(&basevec[0], sizeof(double), 9, fp) == 9) flag_latinfo |= 2;
   if ( fread(basis[0],    sizeof(double), fftdim, fp) == fftdim) flag_latinfo |= 4;
   if ( fread(&attyp[0],   sizeof(int),    nucell, fp) == nucell) flag_latinfo |= 8;
+  if ( fread(&M_inv_sqrt[0], sizeof(double), nucell, fp) == nucell) flag_mass_read = 1;
   fclose(fp);
 
   if ((flag_latinfo&15) == 15){
+    car2dir(flag_mass_read);
+    real2rec();
+
     flag_latinfo = 1;
-    car2dir();
   } else {
-    flag_latinfo = 0;
     Tmeasure = 0.;
+    flag_latinfo = 0;
+  }
+
+  if ( flag_mass_read ){ // M_inv_sqrt info read, the data stored are force constant matrix instead of dynamical matrix.
+    nasr = 20;
+    if (nucell <= 1) nasr = 1;
+    printf("\nPlease input the # of iterations to enforce ASR [%d]: ", nasr);
+    if (strlen(gets(str)) > 0) nasr = atoi(strtok(str, " \n\t\r\f"));
+
+    EnforceASR();
+
+    // get the dynamical matrix from force constant matrix: D = 1/M x Phi
+    for (int idq=0; idq< npt; idq++){
+      int ndim =0;
+      for (int idim=0; idim<fftdim; idim++){
+        for (int jdim=0; jdim<fftdim; jdim++){
+          double inv_mass = M_inv_sqrt[idim/sysdim]*M_inv_sqrt[jdim/sysdim];
+          DM_all[idq][ndim].r *= inv_mass;
+          DM_all[idq][ndim].i *= inv_mass;
+          ndim++;
+        }
+      }
+    }
   }
 
   // ask for the interpolation method
@@ -241,12 +268,14 @@ return;
 /* ----------------------------------------------------------------------------
  * private method to convert the cartisan coordinate of basis into fractional
  * ---------------------------------------------------------------------------- */
-void DynMat::car2dir()
+void DynMat::car2dir(int flag)
 {
-  for (int i=0; i<3; i++){
-    basevec[i]   /= double(nx);
-    basevec[i+3] /= double(ny);
-    basevec[i+6] /= double(nz);
+  if (!flag){ // in newer version, this is done in fix-phonon
+    for (int i=0; i<3; i++){
+      basevec[i]   /= double(nx);
+      basevec[i+3] /= double(ny);
+      basevec[i+6] /= double(nz);
+    }
   }
 
   if (sysdim == 1){
@@ -283,3 +312,102 @@ void DynMat::car2dir()
 
 return;
 }
+
+/* ----------------------------------------------------------------------------
+ * private method to enforce the acoustic sum rule on force constant matrix at G
+ * ---------------------------------------------------------------------------- */
+void DynMat::EnforceASR()
+{
+  if (nasr < 1) return;
+
+  for (int iit=0; iit<nasr; iit++){
+    // simple ASR; the resultant matrix might not be symmetric
+    for (int a=0; a<sysdim; a++)
+    for (int b=0; b<sysdim; b++){
+      for (int k=0; k<nucell; k++){
+        double sum = 0.;
+        for (int kp=0; kp<nucell; kp++){
+          int idx = (k*sysdim+a)*fftdim+kp*sysdim+b;
+          sum += DM_all[0][idx].r;
+        }
+        sum /= double(nucell);
+        for (int kp=0; kp<nucell; kp++){
+          int idx = (k*sysdim+a)*fftdim+kp*sysdim+b;
+          DM_all[0][idx].r -= sum;
+        }
+      }
+    }
+   
+    // symmetrize
+    for (int k=0; k<nucell; k++)
+    for (int kp=k; kp<nucell; kp++){
+      double csum = 0.;
+      for (int a=0; a<sysdim; a++)
+      for (int b=0; b<sysdim; b++){
+        int idx = (k*sysdim+a)*fftdim+kp*sysdim+b;
+        int jdx = (kp*sysdim+b)*fftdim+k*sysdim+a;
+        csum = (DM_all[0][idx].r + DM_all[0][jdx].r )*0.5;
+        DM_all[0][idx].r = DM_all[0][jdx].r = csum;
+      }
+    }
+  }
+
+  // symmetric ASR
+  for (int a=0; a<sysdim; a++)
+  for (int b=0; b<sysdim; b++){
+    for (int k=0; k<nucell; k++){
+      double sum = 0.;
+      for (int kp=0; kp<nucell; kp++){
+        int idx = (k*sysdim+a)*fftdim+kp*sysdim+b;
+        sum += DM_all[0][idx].r;
+      }
+      sum /= double(nucell-k);
+      for (int kp=k; kp<nucell; kp++){
+        int idx = (k*sysdim+a)*fftdim+kp*sysdim+b;
+        int jdx = (kp*sysdim+b)*fftdim+k*sysdim+a;
+        DM_all[0][idx].r -= sum;
+        DM_all[0][jdx].r  = DM_all[0][idx].r;
+      }
+    }
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * private method to get the reciprocal lattice vectors from the real space ones
+ * ---------------------------------------------------------------------------- */
+void DynMat::real2rec()
+{
+  ibasevec[0] = basevec[4]*basevec[8] - basevec[5]*basevec[7];
+  ibasevec[1] = basevec[5]*basevec[6] - basevec[3]*basevec[8];
+  ibasevec[2] = basevec[3]*basevec[7] - basevec[4]*basevec[6];
+
+  ibasevec[3] = basevec[7]*basevec[2] - basevec[8]*basevec[1];
+  ibasevec[4] = basevec[8]*basevec[0] - basevec[6]*basevec[2];
+  ibasevec[5] = basevec[6]*basevec[1] - basevec[7]*basevec[0];
+
+  ibasevec[6] = basevec[1]*basevec[5] - basevec[2]*basevec[4];
+  ibasevec[7] = basevec[2]*basevec[3] - basevec[0]*basevec[5];
+  ibasevec[8] = basevec[0]*basevec[4] - basevec[1]*basevec[3];
+
+  double vol = 0.;
+  for (int i=0; i<sysdim; i++) vol += ibasevec[i] * basevec[i];
+  vol = 8.*atan(1.)/vol;
+
+  for (int i=0; i<9; i++) ibasevec[i] *= vol;
+
+  printf("\n"); for (int i=0; i<60; i++) printf("=");
+  printf("\nBasis vectors of the unit cell in real space:");
+  for (int i=0; i<sysdim; i++){
+    printf("\n     A%d: ", i+1);
+    for (int j=0; j<sysdim; j++) printf("%8.4f ", basevec[i*3+j]);
+  }
+  printf("\nBasis vectors of the corresponding reciprocal cell:");
+  for (int i=0; i<sysdim; i++){
+    printf("\n     B%d: ", i+1);
+    for (int j=0; j<sysdim; j++) printf("%8.4f ", ibasevec[i*3+j]);
+  }
+  printf("\n"); for (int i=0; i<60; i++) printf("="); printf("\n");
+
+return;
+}
+/* --------------------------------------------------------------------*/

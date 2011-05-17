@@ -1,7 +1,7 @@
 %!PS-Adobe-2.0
 %%Title: pdisp.eps
-%%Creator: gnuplot 4.2 patchlevel 4 
-%%CreationDate: Thu Sep  2 15:26:03 2010
+%%Creator: gnuplot 4.2 patchlevel 6 
+%%CreationDate: Tue May 17 14:25:40 2011
 %%DocumentFonts: (atend)
 %%BoundingBox: 50 50 554 770
 %%Orientation: Landscape
@@ -46,11 +46,11 @@ systemdict /pdfmark known not {
 SDict begin [
   /Title (pdisp.eps)
   /Subject (gnuplot plot)
-  /Creator (gnuplot 4.2 patchlevel 4 )
+  /Creator (gnuplot 4.2 patchlevel 6 )
   /Author (L.T. Kong,,,)
 %  /Producer (gnuplot)
 %  /Keywords ()
-  /CreationDate (Thu Sep  2 15:26:03 2010)
+  /CreationDate (Tue May 17 14:25:40 2011)
   /DOCINFO pdfmark
 end
 } ifelse
@@ -461,131 +461,86 @@ gsave
 0 setgray
 newpath
 (Helvetica) findfont 200 scalefont setfont
-gsave % colour palette begin
-/maxcolors 0 def
-/HSV2RGB {  exch dup 0.0 eq {pop exch pop dup dup} % achromatic gray
-  { /HSVs exch def /HSVv exch def 6.0 mul dup floor dup 3 1 roll sub
-     /HSVf exch def /HSVi exch cvi def /HSVp HSVv 1.0 HSVs sub mul def
-	 /HSVq HSVv 1.0 HSVs HSVf mul sub mul def 
-	 /HSVt HSVv 1.0 HSVs 1.0 HSVf sub mul sub mul def
-	 /HSVi HSVi 6 mod def 0 HSVi eq {HSVv HSVt HSVp}
-	 {1 HSVi eq {HSVq HSVv HSVp}{2 HSVi eq {HSVp HSVv HSVt}
-	 {3 HSVi eq {HSVp HSVq HSVv}{4 HSVi eq {HSVt HSVp HSVv}
-	 {HSVv HSVp HSVq} ifelse} ifelse} ifelse} ifelse} ifelse
-  } ifelse} def
-/Constrain {
-  dup 0 lt {0 exch pop}{dup 1 gt {1 exch pop} if} ifelse} def
-/YIQ2RGB {
-  3 copy -1.702 mul exch -1.105 mul add add Constrain 4 1 roll
-  3 copy -0.647 mul exch -0.272 mul add add Constrain 5 1 roll
-  0.621 mul exch -0.956 mul add add Constrain 3 1 roll } def
-/CMY2RGB {  1 exch sub exch 1 exch sub 3 2 roll 1 exch sub 3 1 roll exch } def
-/XYZ2RGB {  3 copy -0.9017 mul exch -0.1187 mul add exch 0.0585 mul exch add
-  Constrain 4 1 roll 3 copy -0.0279 mul exch 1.999 mul add exch
-  -0.9844 mul add Constrain 5 1 roll -0.2891 mul exch -0.5338 mul add
-  exch 1.91 mul exch add Constrain 3 1 roll} def
-/SelectSpace {ColorSpace (HSV) eq {HSV2RGB}{ColorSpace (XYZ) eq {
-  XYZ2RGB}{ColorSpace (CMY) eq {CMY2RGB}{ColorSpace (YIQ) eq {YIQ2RGB}
-  if} ifelse} ifelse} ifelse} def
-/InterpolatedColor false def
-/cF7 {sqrt} bind def	% sqrt(x)
-/cF5 {dup dup mul mul} bind def	% x^3
-/cF15 {360 mul sin} bind def	% sin(360x)
-/pm3dround {maxcolors 0 gt {dup 1 ge
-	{pop 1} {maxcolors mul floor maxcolors 1 sub div} ifelse} if} def
-/pm3dGamma 1.0 1.5 div def
-/ColorSpace (RGB) def
-Color true and { % COLOUR vs. GRAY map
-  InterpolatedColor { %% Interpolation vs. RGB-Formula
-    /g {stroke pm3dround /grayv exch def interpolate
-        SelectSpace setrgbcolor} bind def
-  }{
-  /g {stroke pm3dround dup cF7 Constrain exch dup cF5 Constrain exch cF15 Constrain 
-       SelectSpace setrgbcolor} bind def
-  } ifelse
-}{
-  /g {stroke pm3dround pm3dGamma exp setgray} bind def
-} ifelse
 1.000 UL
 LTb
-1140 640 M
+1100 640 M
 63 0 V
-5777 0 R
+5737 0 R
 -63 0 V
 stroke
-1020 640 M
+980 640 M
 [ [(Helvetica) 200.0 0.0 true true 0 (0.0)]
 ] -66.7 MRshow
 1.000 UL
 LTb
-1140 1680 M
+1100 1680 M
 63 0 V
-5777 0 R
+5737 0 R
 -63 0 V
 stroke
-1020 1680 M
+980 1680 M
 [ [(Helvetica) 200.0 0.0 true true 0 (0.5)]
 ] -66.7 MRshow
 1.000 UL
 LTb
-1140 2720 M
+1100 2720 M
 63 0 V
-5777 0 R
+5737 0 R
 -63 0 V
 stroke
-1020 2720 M
+980 2720 M
 [ [(Helvetica) 200.0 0.0 true true 0 (1.0)]
 ] -66.7 MRshow
 1.000 UL
 LTb
-1140 3760 M
+1100 3760 M
 63 0 V
-5777 0 R
+5737 0 R
 -63 0 V
 stroke
-1020 3760 M
+980 3760 M
 [ [(Helvetica) 200.0 0.0 true true 0 (1.5)]
 ] -66.7 MRshow
 1.000 UL
 LTb
-1140 4800 M
+1100 4800 M
 63 0 V
-5777 0 R
+5737 0 R
 -63 0 V
 stroke
-1020 4800 M
+980 4800 M
 [ [(Helvetica) 200.0 0.0 true true 0 (2.0)]
 ] -66.7 MRshow
 1.000 UL
 LTb
-1140 640 M
+1100 640 M
 0 63 V
 0 4097 R
 0 -63 V
 stroke
-1140 440 M
+1100 440 M
 [ [(Helvetica) 200.0 0.0 true true 0 (-)]
 [(Symbol) 200.0 0.0 true true 0 (p)]
 [(Helvetica) 200.0 0.0 true true 0 (/2a)]
 ] -66.7 MCshow
 1.000 UL
 LTb
-4060 640 M
+4000 640 M
 0 63 V
 0 4097 R
 0 -63 V
 stroke
-4060 440 M
+4000 440 M
 [ [(Symbol) 200.0 0.0 true true 0 (G)]
 ] -66.7 MCshow
 1.000 UL
 LTb
-6980 640 M
+6900 640 M
 0 63 V
 0 4097 R
 0 -63 V
 stroke
-6980 440 M
+6900 440 M
 [ [(Symbol) 200.0 0.0 true true 0 (p)]
 [(Helvetica) 200.0 0.0 true true 0 (/2a)]
 ] -66.7 MCshow
@@ -593,28 +548,28 @@ stroke
 LTb
 1.000 UL
 LTb
-1140 4800 N
+1100 4800 N
 0 -4160 V
-5840 0 V
+5800 0 V
 0 4160 V
--5840 0 V
+-5800 0 V
 Z stroke
 LCb setrgbcolor
-440 2720 M
+400 2720 M
 currentpoint gsave translate 90 rotate 0 0 moveto
 [ [(Symbol) 200.0 0.0 true true 0 (w)]
 ] -66.7 MCshow
 grestore
 LTb
 LCb setrgbcolor
-4060 140 M
+4000 140 M
 [ [(Helvetica) 200.0 0.0 true true 0 (q)]
 ] -66.7 MCshow
 LTb
 1.000 UP
 1.000 UL
 LT8
-4060 640 M
+4000 640 M
 0 4160 V
 stroke
 LTb
@@ -622,308 +577,307 @@ LTb
 LT0
 LC2 setrgbcolor
 LTb
-1980 4637 M
+1940 4637 M
 [ [(Helvetica) 200.0 0.0 true true 0 (Theory)]
 ] -66.7 MRshow
 LT0
 LC2 setrgbcolor
-2100 4637 M
+2060 4637 M
 543 0 V
-1140 3582 M
+1100 3582 M
 58 1 V
-59 4 V
+58 4 V
 58 7 V
-59 10 V
+58 10 V
 58 12 V
 58 14 V
-59 15 V
+58 15 V
 58 17 V
-59 19 V
+58 19 V
 58 19 V
 58 20 V
-59 20 V
+58 20 V
 58 21 V
-59 22 V
+58 22 V
 58 21 V
 58 21 V
-59 22 V
-58 21 V
-59 20 V
+58 22 V
 58 21 V
 58 20 V
-59 20 V
+58 21 V
+58 20 V
+58 20 V
 58 19 V
-59 19 V
+58 19 V
 58 19 V
 58 17 V
-59 17 V
 58 17 V
-59 16 V
+58 17 V
+58 16 V
 58 15 V
 58 15 V
-59 14 V
+58 14 V
 58 13 V
-59 13 V
+58 13 V
 58 12 V
 58 11 V
-59 11 V
+58 11 V
 58 9 V
-59 9 V
+58 9 V
 58 8 V
 58 8 V
-59 6 V
 58 6 V
-59 5 V
+58 6 V
+58 5 V
 58 5 V
 58 3 V
-59 3 V
+58 3 V
 58 2 V
-59 1 V
+58 1 V
 58 1 V
 58 -1 V
-59 -1 V
+58 -1 V
 58 -2 V
-59 -3 V
+58 -3 V
 58 -3 V
 58 -5 V
-59 -5 V
+58 -5 V
 58 -6 V
-59 -6 V
+58 -6 V
 58 -8 V
 58 -8 V
-59 -9 V
 58 -9 V
-59 -11 V
+58 -9 V
+58 -11 V
 58 -11 V
 58 -12 V
-59 -13 V
 58 -13 V
-59 -14 V
+58 -13 V
+58 -14 V
 58 -15 V
 58 -15 V
-59 -16 V
+58 -16 V
 58 -17 V
-59 -17 V
+58 -17 V
 58 -17 V
 58 -19 V
-59 -19 V
 58 -19 V
-59 -20 V
+58 -19 V
+58 -20 V
 58 -20 V
 58 -21 V
-59 -20 V
+58 -20 V
 58 -21 V
-59 -22 V
+58 -22 V
 58 -21 V
 58 -21 V
-59 -22 V
+58 -22 V
 58 -21 V
-59 -20 V
+58 -20 V
 58 -20 V
 58 -19 V
-59 -19 V
+58 -19 V
 58 -17 V
-59 -15 V
+58 -15 V
 58 -14 V
 58 -12 V
-59 -10 V
+58 -10 V
 58 -7 V
-59 -4 V
+58 -4 V
 58 -1 V
 stroke
 LT0
 LC2 setrgbcolor
-1140 2720 M
+1100 2720 M
 58 -2 V
-59 -6 V
+58 -6 V
 58 -10 V
-59 -14 V
+58 -14 V
 58 -17 V
 58 -21 V
-59 -23 V
+58 -23 V
 58 -26 V
-59 -29 V
+58 -29 V
 58 -30 V
 58 -33 V
-59 -34 V
+58 -34 V
 58 -36 V
-59 -37 V
+58 -37 V
 58 -39 V
 58 -40 V
-59 -41 V
 58 -41 V
-59 -43 V
+58 -41 V
+58 -43 V
 58 -44 V
 58 -44 V
-59 -45 V
+58 -45 V
 58 -46 V
-59 -46 V
+58 -46 V
 58 -47 V
 58 -48 V
-59 -48 V
+58 -48 V
 58 -49 V
-59 -49 V
+58 -49 V
 58 -49 V
 58 -50 V
-59 -50 V
-58 -51 V
-59 -51 V
+58 -50 V
 58 -51 V
 58 -51 V
-59 -52 V
+58 -51 V
+58 -51 V
 58 -52 V
-59 -52 V
+58 -52 V
+58 -52 V
 58 -52 V
 58 -53 V
-59 -53 V
-58 -53 V
-59 -53 V
 58 -53 V
 58 -53 V
-59 -53 V
 58 -53 V
-59 -54 V
+58 -53 V
+58 -53 V
+58 -53 V
+58 -53 V
+58 -54 V
 58 -53 V
 58 53 V
-59 54 V
-58 53 V
-59 53 V
+58 54 V
 58 53 V
 58 53 V
-59 53 V
 58 53 V
-59 53 V
+58 53 V
+58 53 V
+58 53 V
+58 53 V
 58 53 V
 58 52 V
-59 52 V
 58 52 V
-59 52 V
+58 52 V
+58 52 V
 58 51 V
 58 51 V
-59 51 V
 58 51 V
-59 50 V
+58 51 V
+58 50 V
 58 50 V
 58 49 V
-59 49 V
 58 49 V
-59 48 V
+58 49 V
+58 48 V
 58 48 V
 58 47 V
-59 46 V
 58 46 V
-59 45 V
+58 46 V
+58 45 V
 58 44 V
 58 44 V
-59 43 V
+58 43 V
 58 41 V
-59 41 V
+58 41 V
 58 40 V
 58 39 V
-59 37 V
+58 37 V
 58 36 V
-59 34 V
+58 34 V
 58 33 V
 58 30 V
-59 29 V
+58 29 V
 58 26 V
-59 23 V
+58 23 V
 58 21 V
 58 17 V
-59 14 V
+58 14 V
 58 10 V
-59 6 V
+58 6 V
 58 2 V
 1.000 UP
 stroke
 LT0
 LTb
-1980 4437 M
+1940 4437 M
 [ [(Helvetica) 200.0 0.0 true true 0 (MD)]
 ] -66.7 MRshow
 LT0
-1140 2660 CircleF
-1323 2689 CircleF
-1505 2655 CircleF
-1688 2563 CircleF
-1870 2454 CircleF
-2053 2338 CircleF
-2235 2186 CircleF
-2418 2049 CircleF
-2600 1937 CircleF
-2783 1791 CircleF
-2965 1604 CircleF
-3148 1500 CircleF
-3330 1326 CircleF
-3513 1152 CircleF
-3695 995 CircleF
-3878 842 CircleF
-4060 640 CircleF
-4243 842 CircleF
-4425 995 CircleF
-4608 1152 CircleF
-4790 1326 CircleF
-4973 1500 CircleF
-5155 1604 CircleF
-5338 1791 CircleF
-5520 1937 CircleF
-5703 2049 CircleF
-5885 2186 CircleF
-6068 2338 CircleF
-6250 2454 CircleF
-6433 2563 CircleF
-6615 2655 CircleF
-6798 2689 CircleF
-6980 2660 CircleF
-2371 4437 CircleF
+1100 2681 CircleF
+1281 2718 CircleF
+1463 2667 CircleF
+1644 2594 CircleF
+1825 2436 CircleF
+2006 2297 CircleF
+2188 2214 CircleF
+2369 2079 CircleF
+2550 1951 CircleF
+2731 1741 CircleF
+2913 1641 CircleF
+3094 1475 CircleF
+3275 1329 CircleF
+3456 1146 CircleF
+3638 958 CircleF
+3819 832 CircleF
+4000 770 CircleF
+4181 832 CircleF
+4363 958 CircleF
+4544 1146 CircleF
+4725 1329 CircleF
+4906 1475 CircleF
+5088 1641 CircleF
+5269 1741 CircleF
+5450 1951 CircleF
+5631 2079 CircleF
+5813 2214 CircleF
+5994 2297 CircleF
+6175 2436 CircleF
+6356 2594 CircleF
+6538 2667 CircleF
+6719 2718 CircleF
+6900 2681 CircleF
+2331 4437 CircleF
 1.000 UP
 1.000 UL
 LT0
-1140 3585 CircleF
-1323 3599 CircleF
-1505 3631 CircleF
-1688 3678 CircleF
-1870 3769 CircleF
-2053 3841 CircleF
-2235 3855 CircleF
-2418 3964 CircleF
-2600 4043 CircleF
-2783 4093 CircleF
-2965 4133 CircleF
-3148 4110 CircleF
-3330 4144 CircleF
-3513 4244 CircleF
-3695 4223 CircleF
-3878 4287 CircleF
-4060 4216 CircleF
-4243 4287 CircleF
-4425 4223 CircleF
-4608 4244 CircleF
-4790 4144 CircleF
-4973 4110 CircleF
-5155 4133 CircleF
-5338 4093 CircleF
-5520 4043 CircleF
-5703 3964 CircleF
-5885 3855 CircleF
-6068 3841 CircleF
-6250 3769 CircleF
-6433 3678 CircleF
-6615 3631 CircleF
-6798 3599 CircleF
-6980 3585 CircleF
+1100 3581 CircleF
+1281 3609 CircleF
+1463 3619 CircleF
+1644 3677 CircleF
+1825 3761 CircleF
+2006 3840 CircleF
+2188 3892 CircleF
+2369 3944 CircleF
+2550 3993 CircleF
+2731 4049 CircleF
+2913 4090 CircleF
+3094 4197 CircleF
+3275 4179 CircleF
+3456 4220 CircleF
+3638 4224 CircleF
+3819 4300 CircleF
+4000 4243 CircleF
+4181 4300 CircleF
+4363 4224 CircleF
+4544 4220 CircleF
+4725 4179 CircleF
+4906 4197 CircleF
+5088 4090 CircleF
+5269 4049 CircleF
+5450 3993 CircleF
+5631 3944 CircleF
+5813 3892 CircleF
+5994 3840 CircleF
+6175 3761 CircleF
+6356 3677 CircleF
+6538 3619 CircleF
+6719 3609 CircleF
+6900 3581 CircleF
 1.000 UL
 LTb
-1140 4800 N
+1100 4800 N
 0 -4160 V
-5840 0 V
+5800 0 V
 0 4160 V
--5840 0 V
+-5800 0 V
 Z stroke
 1.000 UP
 1.000 UL
 LTb
-grestore % colour palette end
 stroke
 grestore
 end
