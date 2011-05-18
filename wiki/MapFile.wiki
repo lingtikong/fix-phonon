@@ -31,3 +31,11 @@ z`[`id`]` = ( l3 + sz`[`k`]` ) `*` *a*_3_;
 
 where _l1_ goes from _0_ to _nx-1_, and so forth.
 Therefore, the four numbers (_l1, l2, l3, k)_ is mapped to the atom _id_ uniquely.
+
+----
+
+I have a code to generate the position file as well as the map file simultaneously, one can get it via svn:
+
+[http://code.google.com/p/latgen/source/checkout latgen]
+
+But no support will be provided to this code. Generally, one chooses the respective primitive cell to generate the position file and then calculate the phonon dispersions.
