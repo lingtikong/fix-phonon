@@ -1,4 +1,4 @@
-phana  ver. 2.22
+phana  ver. 2.24
 
 This program reads the binary file created by fix_phonon
 and helps to analyse the phonon related info.
@@ -20,4 +20,4 @@ the frequencies are $\nu$ instead of $\omega$.
 
 
 Author: Ling-Ti Kong
-May 17, 2011
+May 18, 2011
