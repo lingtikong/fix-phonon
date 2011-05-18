@@ -3,14 +3,14 @@ matrix as well as phonon dispersion curve for FCC Cu based on EAM potentail.
 
 The files under this directory:
 
- 1) CuPhonon.bin.6200000   : last output binary file by fix-phonon
+ 1) CuPhonon.bin.6500000   : last output binary file by fix-phonon
  2) CuPhonon.log           : log file for fix-phonon
  3) cuu3.eam               : EAM potential file for Cu
  4) data.pos               : LAMMPS input file
- 5) disp.dat               : phonon dispersion data from CuPhonon.bin.6200000
+ 5) disp.dat               : phonon dispersion data from CuPhonon.bin.6500000
  6) disp-expr.dat          : experimental phonon dispersion data for Cu
  7) disp-ld.dat            : phonon dispersion data by lattice dynamics based on EAM
- 8) dos.dat                : phonon DOS data from CuPhonon.bin.6200000
+ 8) dos.dat                : phonon DOS data from CuPhonon.bin.6500000
  9) dos-expr.dat           : experimental PDOS for Cu
 10) dos-ld.dat             : PDOS by LD based on EAM
 11) in.disp                : input file to get disp.dat by phana
@@ -28,9 +28,9 @@ To run this example, simply invoke:
 -> lmp -in in.EAM3D -screen none
 
 Once done, one can use the auxiliary analysing code "phana" to obtain "disp.dat" and
-"dos.dat" based on data from CuPhonon.bin.6200000:
--> phana CuPhonon.bin.6200000 < in.disp
--> phana CuPhonon.bin.6200000 < in.dos
+"dos.dat" based on data from CuPhonon.bin.6500000:
+-> phana CuPhonon.bin.6500000 < in.disp
+-> phana CuPhonon.bin.6500000 < in.dos
 
 And then use the gnuplot script file "plot.disp"/"plot.dos" to generate pdisp.eps/pdos.eps:
 -> gnuplot plot.pdisp
@@ -44,4 +44,4 @@ NOTE: the binary file provided here might be unreadable on some computers becaus
       incompatibility between different architectures.
 
 Author: Ling-Ti Kong, konglt@sjtu.edu.cn
-Sep 2010
+May 2011

@@ -43,4 +43,4 @@ thermo_modify temp MyTemp
 thermo   100
 
 #
-run 		 1500000
+run 		 2000000

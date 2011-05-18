@@ -3,7 +3,7 @@ Installation procedure:
 1. Download the latest version of LAMMPS from http://lammps.sandia.gov/download.html
    or http://sourceforge.net/project/showfiles.php?group_id=149493, and untar
    on your local disk; the current release of FixPhonon works well with
-   version 20 Apr 2011 of LAMMPS, as far as we know. 
+   version 7 May 2011 of LAMMPS, as far as we know. 
 
 2. Untar the current release of fix_phonon under the "src" directory of LAMMPS.
 
@@ -22,5 +22,7 @@ Installation procedure:
 5. The document files of FixPhonon is under the directory of USER-PHONON, you can
    put them into the doc directory of LAMMPS.
 
-Author: Ling-Ti Kong, konglt@sjtu.edu.cn
-Apr. 2011
+6. For further info, please check: http://code.google.com/p/fix-phonon
+
+Author: Ling-Ti Kong, konglt_at_sjtu.edu.cn
+May. 2011

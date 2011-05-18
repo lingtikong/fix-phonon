@@ -82,7 +82,7 @@ to get the elastic stiffness coefficients. The dynamical matrices are then
 constructed and written to file "prefix".bin."timestep" in binary format and
 to file "prefix".log for each wavevector [q].
 
-A detailed description of this method can be found in ("Kong2010"_#kong2010).
+A detailed description of this method can be found in ("Kong2011"_#kong2011).
 
 The {sysdim} keyword is optional, if specified and its value is smaller than
 the dimensionality of the molecular dynamics simulation, its value will be
@@ -158,8 +158,12 @@ to the simulation of elastic semi-infinite solids}, "Phys. Rev. B [74], 075420
 :link(kong)
 [(Kong)] L.T. Kong, G. Bartels, C. Campa&ntilde;&aacute;, C. Denniston, and Martin H. M&uuml;ser, 
 {Implementation of Green's function molecular dynamics: An extension to LAMMPS},
-"Computer Physics Communications, in press (2009), doi:10.1016/j.cpc.2008.12.035"_http://dx.doi.org/10.1016/j.cpc.2008.12.035
+"Computer Physics Communications [180](6):1004-1010 (2009)."_http://dx.doi.org/10.1016/j.cpc.2008.12.035
 
-:link(kong2010)
-[(Kong2010)] L.T. Kong, {Phonon dispersion measured directly from molecular dynamics simulations},
-submitted to "Computer Physics Communications".
+L.T. Kong, C. Denniston, and Martin H. M&uuml;ser,
+{An improved version of the Green's function molecular dynamics method},
+"Computer Physics Communications [182](2):540-541 (2011)."_http://dx.doi.org/10.1016/j.cpc.2010.10.006
+
+:link(kong2011)
+[(Kong2011)] L.T. Kong, {Phonon dispersion measured directly from molecular dynamics simulations},
+"Computer Physics Communications, in press, 2011, doi:10.1016/j.cpc.2011.04.019"_http://dx.doi.org/10.1016/j.cpc.2011.04.019
