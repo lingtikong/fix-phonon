@@ -23,7 +23,7 @@ reset_timestep 0
 
 # fixes 
 fix      1 all npt temp $t $t $d iso 1. 1. 1. pchain 8 drag 1.0
-fix      2 all phonon 20 50000 200000 map.in CuPhonon
+fix      2 all phonon 10 50000 500000 map.in CuPhonon
 
 #
 timestep 2e-3
@@ -36,5 +36,5 @@ thermo  100
 restart 2000000 restart.one restart.two
 
 # execution
-run 	 6200000
+run 	 6500000
 write_restart Restart.final

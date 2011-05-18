@@ -7,6 +7,12 @@
 // to intialize the class
 DynMat::DynMat(int narg, char **arg)
 {
+  attyp = NULL;
+  memory = NULL;
+  M_inv_sqrt = NULL;
+  interpolate = NULL;
+  binfile = funit = dmfile = NULL;
+
   // get the binary file name from command line option or user input
   char str[MAXLINE];
   if (narg < 2) {
@@ -29,7 +35,7 @@ DynMat::DynMat(int narg, char **arg)
     exit(1);
   }
 
-  // read data from the binary file
+  // read header info from the binary file
   if ( fread(&sysdim, sizeof(int),    1, fp) != 1) {printf("\nError while reading sysdim from file: %s\n", binfile); fclose(fp); exit(2);}
   if ( fread(&nx,     sizeof(int),    1, fp) != 1) {printf("\nError while reading nx from file: %s\n", binfile); fclose(fp); exit(2);}
   if ( fread(&ny,     sizeof(int),    1, fp) != 1) {printf("\nError while reading ny from file: %s\n", binfile); fclose(fp); exit(2);}
@@ -52,6 +58,7 @@ DynMat::DynMat(int narg, char **arg)
     printf("Wrong values read from header of file: %s, please check the binary file!\n", binfile);
     fclose(fp); exit(3);
   }
+
   funit = new char[4];
   strcpy(funit, "THz");
   if (boltz == 1.){eml2f = 1.; delete funit; funit=new char[22]; strcpy(funit,"sqrt(epsilon/(m.sigma^2))");}
@@ -102,10 +109,6 @@ DynMat::DynMat(int narg, char **arg)
   }
 
   if ( flag_mass_read ){ // M_inv_sqrt info read, the data stored are force constant matrix instead of dynamical matrix.
-    nasr = 20;
-    if (nucell <= 1) nasr = 1;
-    printf("\nPlease input the # of iterations to enforce ASR [%d]: ", nasr);
-    if (strlen(gets(str)) > 0) nasr = atoi(strtok(str, " \n\t\r\f"));
 
     EnforceASR();
 
@@ -134,16 +137,17 @@ DynMat::DynMat(int narg, char **arg)
 DynMat::~DynMat()
 {
  // destroy all memory allocated
- delete []binfile;
- delete []funit;
+ if (binfile) delete []binfile;
+ if (funit) delete []funit;
  if (dmfile) delete []dmfile;
  if (interpolate) delete interpolate;
  if (attyp) delete []attyp;
+ if (M_inv_sqrt) delete []M_inv_sqrt;
 
  memory->destroy_2d_complex_array(DM_all);
  memory->destroy_2d_complex_array(DM_q);
  memory->destroy_2d_double_array(basis);
- delete memory;
+ if (memory) delete memory;
 }
 
 /* ----------------------------------------------------------------------------
@@ -318,7 +322,20 @@ return;
  * ---------------------------------------------------------------------------- */
 void DynMat::EnforceASR()
 {
-  if (nasr < 1) return;
+  char str[MAXLINE];
+  int nasr = 20;
+  if (nucell <= 1) nasr = 1;
+  printf("\n"); for (int i=0; i<60; i++) printf("=");
+  printf("\nPlease input the # of iterations to enforce ASR [%d]: ", nasr);
+  if (strlen(gets(str)) > 0) nasr = atoi(strtok(str, " \n\t\r\f"));
+  if (nasr < 1){return; for (int i=0; i<60; i++) printf("="); printf("\n");}
+
+  double egvs[fftdim];
+  for (int i=0; i<fftdim; i++)
+  for (int j=0; j<fftdim; j++) DM_q[i][j] = DM_all[0][i*fftdim+j];
+  geteigen(egvs, 0);
+  printf("Eigenvalues of Phi at gamma before enforcing ASR:\n");
+  for (int i=0; i<fftdim; i++) printf("%lg ", egvs[i]); printf("\n\n");
 
   for (int iit=0; iit<nasr; iit++){
     // simple ASR; the resultant matrix might not be symmetric
@@ -370,6 +387,15 @@ void DynMat::EnforceASR()
       }
     }
   }
+
+  for (int i=0; i<fftdim; i++)
+  for (int j=0; j<fftdim; j++) DM_q[i][j] = DM_all[0][i*fftdim+j];
+  geteigen(egvs, 0);
+  printf("Eigenvalues of Phi at gamma after enforcing ASR:\n");
+  for (int i=0; i<fftdim; i++) printf("%lg ", egvs[i]);
+  printf("\n"); for (int i=0; i<60; i++) printf("="); printf("\n\n");
+
+return;
 }
 
 /* ----------------------------------------------------------------------------
