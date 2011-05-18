@@ -605,8 +605,8 @@ void Phonon::QMesh()
       qpts[iq][2] = double(k)/double(nz);
       wt[iq++] = w;
     }
-  }
 #ifdef UseSPG
+  }
   if ((method == 2) && (atpos == NULL)){
     atpos = memory->create_2d_double_array(dynmat->nucell,3,"phonon_ldos_egv:atpos");
     attyp = new int [dynmat->nucell];
