@@ -14,14 +14,14 @@ Interpolate::Interpolate(int nx, int ny, int nz, int ndm, doublecomplex **DM)
   ndim = ndm;
   memory = new Memory;
 
-  data = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:data");
-  Dfdx = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:Dfdx");
-  Dfdy = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:Dfdy");
-  Dfdz = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:Dfdz");
-  D2fdxdy = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:D2fdxdy");
-  D2fdxdz = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:D2fdxdz");
-  D2fdydz = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:D2fdydz");
-  D3fdxdydz = memory->create_2d_complex_array(Npt, ndim, "Interpolate_Interpolate:D2fdxdydz");
+  data = memory->create(data, Npt, ndim, "Interpolate_Interpolate:data");
+  Dfdx = memory->create(Dfdx, Npt, ndim, "Interpolate_Interpolate:Dfdx");
+  Dfdy = memory->create(Dfdy, Npt, ndim, "Interpolate_Interpolate:Dfdy");
+  Dfdz = memory->create(Dfdz, Npt, ndim, "Interpolate_Interpolate:Dfdz");
+  D2fdxdy = memory->create(D2fdxdy, Npt, ndim, "Interpolate_Interpolate:D2fdxdy");
+  D2fdxdz = memory->create(D2fdxdz, Npt, ndim, "Interpolate_Interpolate:D2fdxdz");
+  D2fdydz = memory->create(D2fdydz, Npt, ndim, "Interpolate_Interpolate:D2fdydz");
+  D3fdxdydz = memory->create(D3fdxdydz, Npt, ndim, "Interpolate_Interpolate:D2fdxdydz");
 
   // copy data
   for (int n=0; n<Npt; n++){
@@ -93,14 +93,14 @@ return;
  * ---------------------------------------------------------------------------- */
 Interpolate::~Interpolate()
 {
-  memory->destroy_2d_complex_array(data);
-  memory->destroy_2d_complex_array(Dfdx);
-  memory->destroy_2d_complex_array(Dfdy);
-  memory->destroy_2d_complex_array(Dfdz);
-  memory->destroy_2d_complex_array(D2fdxdy);
-  memory->destroy_2d_complex_array(D2fdxdz);
-  memory->destroy_2d_complex_array(D2fdydz);
-  memory->destroy_2d_complex_array(D3fdxdydz);
+  memory->destroy(data);
+  memory->destroy(Dfdx);
+  memory->destroy(Dfdy);
+  memory->destroy(Dfdz);
+  memory->destroy(D2fdxdy);
+  memory->destroy(D2fdxdz);
+  memory->destroy(D2fdydz);
+  memory->destroy(D3fdxdydz);
   delete memory;
 }
 

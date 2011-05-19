@@ -55,9 +55,9 @@ Green::Green(int ntm, int sdim, int niter, double min, double max, int ndos, dou
 
   // initialize variables and allocate local memories
   dw = (wmax - wmin)/double(nw-1);
-  alpha = memory->create_2d_double_array(sysdim,nit,  "Green_Green:alpha");
-  beta  = memory->create_2d_double_array(sysdim,nit+1,"Green_Green:beta");
-  ldos  = memory->create_2d_double_array(nw,sysdim, "Green_Green:ldos");
+  alpha = memory->create(alpha, sysdim,nit,  "Green_Green:alpha");
+  beta  = memory->create(beta,  sysdim,nit+1,"Green_Green:beta");
+  ldos  = memory->create(ldos,  nw,sysdim, "Green_Green:ldos");
 
   // use Lanczos algorithm to diagonalize the Hessian
   Lanczos();
@@ -77,9 +77,9 @@ return;
 Green::~Green()
 {
   H = NULL;
-  memory->destroy_2d_double_array(alpha);
-  memory->destroy_2d_double_array(beta);
-  memory->destroy_2d_double_array(ldos);
+  memory->destroy(alpha);
+  memory->destroy(beta);
+  memory->destroy(ldos);
 
   delete memory;
 
