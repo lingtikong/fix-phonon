@@ -11,6 +11,7 @@ DynMat::DynMat(int narg, char **arg)
   memory = NULL;
   M_inv_sqrt = NULL;
   interpolate = NULL;
+  DM_q = DM_all = NULL;
   binfile = funit = dmfile = NULL;
 
   // get the binary file name from command line option or user input
@@ -63,7 +64,7 @@ DynMat::DynMat(int narg, char **arg)
   strcpy(funit, "THz");
   if (boltz == 1.){eml2f = 1.; delete funit; funit=new char[22]; strcpy(funit,"sqrt(epsilon/(m.sigma^2))");}
   else if (boltz == 0.0019872067) eml2f = 3.256576161;
-  else if (boltz == 8.617343e-5) eml2f = 15.63312493;
+  else if (boltz == 8.617343e-5)  eml2f = 15.63312493;
   else if (boltz == 1.3806504e-23) eml2f = 1.;
   else if (boltz == 1.3806504e-16) eml2f = 1.591549431e-14;
   else {
@@ -74,8 +75,8 @@ DynMat::DynMat(int narg, char **arg)
 
   // now to allocate memory for DM
   memory = new Memory;
-  DM_all = memory->create_2d_complex_array(npt, fftdim2, "DynMat:DM_all");
-  DM_q   = memory->create_2d_complex_array(fftdim,fftdim,"DynMat:DM_q");
+  DM_all = memory->create(DM_all, npt, fftdim2, "DynMat:DM_all");
+  DM_q   = memory->create(DM_q, fftdim,fftdim,"DynMat:DM_q");
 
   // read all dynamical matrix info into DM_all
   if ( fread(DM_all[0], sizeof(doublecomplex), npt*fftdim2, fp) != size_t(npt*fftdim2)){
@@ -86,9 +87,9 @@ DynMat::DynMat(int narg, char **arg)
 
   // now try to read unit cell info from the binary file
   flag_latinfo = 0;
-  basis = memory->create_2d_double_array(nucell,sysdim,"DynMat:basis");
-  attyp = new int[nucell];
-  M_inv_sqrt = new double [nucell];
+  basis = memory->create(basis,nucell,sysdim,"DynMat:basis");
+  attyp = memory->create(attyp,nucell, "DynMat:attyp");
+  M_inv_sqrt = memory->create(M_inv_sqrt, nucell, "DynMat:M_inv_sqrt");
   int flag_mass_read = 0;
   
   if ( fread(&Tmeasure,   sizeof(double), 1, fp) == 1) flag_latinfo |= 1;
@@ -137,16 +138,16 @@ DynMat::DynMat(int narg, char **arg)
 DynMat::~DynMat()
 {
  // destroy all memory allocated
- if (binfile) delete []binfile;
  if (funit) delete []funit;
  if (dmfile) delete []dmfile;
+ if (binfile) delete []binfile;
  if (interpolate) delete interpolate;
- if (attyp) delete []attyp;
- if (M_inv_sqrt) delete []M_inv_sqrt;
 
- memory->destroy_2d_complex_array(DM_all);
- memory->destroy_2d_complex_array(DM_q);
- memory->destroy_2d_double_array(basis);
+ memory->destroy(DM_q);
+ memory->destroy(attyp);
+ memory->destroy(basis);
+ memory->destroy(DM_all);
+ memory->destroy(M_inv_sqrt);
  if (memory) delete memory;
 }
 
@@ -216,9 +217,10 @@ int DynMat::geteigen(double *egv, int flag)
   lrwork = 1 + (5+n+n)*n;
   liwork = 3 + 5*n;
   lda    = n;
-  work  = new doublecomplex [lwork];
-  rwork = new double [lrwork];
-  iwork = new long [liwork];
+
+  work  = memory->create(work,  lwork,  "geteigen:work");
+  rwork = memory->create(rwork, lrwork, "geteigen:rwork");
+  iwork = memory->create(iwork, liwork, "geteigen:iwork");
 
   zheevd_(&jobz, &uplo, &n, DM_q[0], &lda, w, work, &lwork, rwork, &lrwork, iwork, &liwork, &info);
  
@@ -230,9 +232,9 @@ int DynMat::geteigen(double *egv, int flag)
     w[i] *= eml2f;
   }
 
-  delete []work;
-  delete []rwork;
-  delete []iwork;
+  memory->destroy(work);
+  memory->destroy(rwork);
+  memory->destroy(iwork);
 
 return info;
 }
@@ -330,6 +332,7 @@ void DynMat::EnforceASR()
   if (strlen(gets(str)) > 0) nasr = atoi(strtok(str, " \n\t\r\f"));
   if (nasr < 1){return; for (int i=0; i<60; i++) printf("="); printf("\n");}
 
+  // compute and display eigenvalues of Phi at gamma before ASR
   double egvs[fftdim];
   for (int i=0; i<fftdim; i++)
   for (int j=0; j<fftdim; j++) DM_q[i][j] = DM_all[0][i*fftdim+j];
@@ -388,6 +391,7 @@ void DynMat::EnforceASR()
     }
   }
 
+  // compute and display eigenvalues of Phi at gamma after ASR
   for (int i=0; i<fftdim; i++)
   for (int j=0; j<fftdim; j++) DM_q[i][j] = DM_all[0][i*fftdim+j];
   geteigen(egvs, 0);

@@ -80,20 +80,21 @@ return;
 Phonon::~Phonon()
 {
   dynmat = NULL;
-  if (qpts) memory->destroy_2d_double_array(qpts);
-  if (eigs) memory->destroy_2d_double_array(eigs);
-  if (wt)  delete []wt;
-  
-  if (locals) delete []locals;
 
-  if (dos) delete []dos;
-  if (ldos) memory->destroy_3d_double_array(ldos);
+  memory->destroy(wt);
+  memory->destroy(qpts);
+  memory->destroy(eigs);
+
+  memory->destroy(locals);
+
+  memory->destroy(dos);
+  memory->destroy(ldos);
 
 #ifdef UseSPG
-  if (attyp) delete []attyp;
-  if (atpos) memory->destroy_2d_double_array(atpos);
+  memory->destroy(attyp);
+  memory->destroy(atpos);
 #endif
-  if (memory) delete memory;
+  delete memory;
 }
 
 /* ----------------------------------------------------------------------------
@@ -134,8 +135,8 @@ void Phonon::pdos()
   
   df  = (fmax-fmin)/double(ndos-1);
   rdf = 1./df;
-  if (dos) delete []dos;
-  dos = new double[ndos];
+  memory->destroy(dos);
+  dos = memory->create(dos, ndos, "pdos:dos");
   for (int i=0; i<ndos; i++) dos[i] = 0.;
 
   // now to calculate the DOS
@@ -228,7 +229,7 @@ void Phonon::ldos_rsgf()
   const double tpi = 8.*atan(1.);
   double **Hessian, scale;
   scale = dynmat->eml2f*tpi; scale *= scale;
-  Hessian = memory->create_2d_double_array(ndim, ndim, "dispersion_ldos_Hessian");
+  Hessian = memory->create(Hessian, ndim, ndim, "dispersion_ldos_Hessian");
 
   double q0[3];
   q0[0] = q0[1] = q0[2] = 0.;
@@ -287,7 +288,7 @@ void Phonon::ldos_rsgf()
     printf("Done!\n");
     time->stop(); time->print(); delete time;
   }
-  memory->destroy_2d_double_array(Hessian);
+  memory->destroy(Hessian);
 
 return;
 }
@@ -465,8 +466,8 @@ void Phonon::smooth(double *array, int npt, double xmin, double delta)
   if (npt < 1) return;
 
   double *tmp, *table;
-  tmp   = new double[npt];
-  table = new double[npt];
+  tmp   = memory->create(tmp, npt, "smooth:tmp");
+  table = memory->create(table, npt, "smooth:table");
   
   double sigma = 4.*delta, fac = 1./(sigma*sigma);
   double em = xmin + delta*0.5;
@@ -488,8 +489,9 @@ void Phonon::smooth(double *array, int npt, double xmin, double delta)
     array[i] = tmp[i]/peso;
     em += delta;
   }
-  delete []tmp;
-  delete []table;
+
+  memory->destroy(tmp);
+  memory->destroy(table);
 
 return;
 }
@@ -586,16 +588,17 @@ void Phonon::QMesh()
   method = 2-method%2;
 #endif
  
-  if (qpts) memory->destroy_2d_double_array(qpts);
-  if (wt)  delete []wt;
+  memory->destroy(wt);
+  memory->destroy(qpts);
 
 #ifdef UseSPG
   if (method == 1){
 #endif
     nq = nx*ny*nz;
     double w = 1./double(nq);
-    qpts = memory->create_2d_double_array(nq, 3, "QMesh_qpts");
-    wt = new double [nq];
+    wt   = memory->create(wt,   nq, "QMesh:wt");
+    qpts = memory->create(qpts, nq, 3, "QMesh:qpts");
+
     int iq = 0;
     for (int i=0; i<nx; i++)
     for (int j=0; j<ny; j++)
@@ -608,8 +611,9 @@ void Phonon::QMesh()
 #ifdef UseSPG
   }
   if ((method == 2) && (atpos == NULL)){
-    atpos = memory->create_2d_double_array(dynmat->nucell,3,"phonon_ldos_egv:atpos");
-    attyp = new int [dynmat->nucell];
+    atpos = memory->create(atpos, dynmat->nucell,3,"QMesh:atpos");
+    attyp = memory->create(attyp, dynmat->nucell,  "QMesh:attyp");
+
     for (int i=0; i<dynmat->nucell; i++)
     for (int idim=0; idim<3; idim++) atpos[i][idim] = 0.;
     for (int i=0; i<3; i++) latvec[i][i] = 1.;
@@ -621,7 +625,7 @@ void Phonon::QMesh()
       // set default, in case system dimension under study is not 3.
       for (int i=0; i<dynmat->nucell; i++)
       for (int idim=0; idim<3; idim++) atpos[i][idim] = 0.;
-      //for (int i=0; i<3; i++) latvec[i][i] = 1.;
+      for (int i=0; i<3; i++) latvec[i][i] = 1.;
 
       // get atomic type info
       for (int i=0; i<num_atom; i++) attyp[i] = dynmat->attyp[i];
@@ -731,8 +735,9 @@ void Phonon::QMesh()
 
     nq = spg_get_ir_reciprocal_mesh(grid_point, map, num_grid, mesh, shift,
                                is_time_reversal, latvec, pos, attyp, num_atom, symprec);
-    qpts = memory->create_2d_double_array(nq,3,"qpts");
-    wt = new double[nq];
+
+    wt   = memory->create(wt,   nq, "QMesh:wt");
+    qpts = memory->create(qpts, nq,3,"QMesh:qpts");
 
     int *iq2idx = new int[num_grid];
     int numq = 0;
@@ -777,8 +782,9 @@ void Phonon::ldos_egv()
   printf("local PDOS, IDs begin with 0: ");
   int nmax = count_words(gets(str));
   if (nmax < 1) return;
-  if (locals) delete []locals;
-  locals = new int[nmax];
+
+  memory->destroy(locals);
+  locals = memory->create(locals, nmax, "ldos_egv:locals");
 
   nlocal = 0;
   ptr = strtok(str," \t\n\r\f");
@@ -815,11 +821,11 @@ void Phonon::ldos_egv()
   QMesh();
 
   // allocate memory for DOS and LDOS
-  if (dos) delete []dos;
-  if (ldos) memory->destroy_3d_double_array(ldos);
+  memory->destroy(dos);
+  memory->destroy(ldos);
 
-  dos = new double[ndos];
-  ldos = memory->create_3d_double_array(ndos,nlocal,sysdim,"phonon_ldos_egv:ldos");
+  dos  = memory->create(dos, ndos,"ldos_egv:dos");
+  ldos = memory->create(ldos,ndos,nlocal,sysdim,"ldos_egv:ldos");
 
   for (int i=0; i<ndos; i++){
     dos[i] = 0.;
@@ -919,8 +925,8 @@ void Phonon::ComputeAll()
 
   printf("\nNow to compute the phonons "); fflush(stdout);
   // now to calculate the frequencies at all q-points
-  if (eigs) memory->destroy_2d_double_array(eigs);
-  eigs = memory->create_2d_double_array(nq,ndim,"QMesh_eigs");
+  if (eigs) memory->destroy(eigs);
+  eigs = memory->create(eigs, nq,ndim,"QMesh_eigs");
   
   for (int iq=0; iq<nq; iq++){
     if ((iq+1)%nprint == 0) {printf("."); fflush(stdout);}
@@ -940,19 +946,22 @@ return;
 int Phonon::count_words(const char *line)
 {
   int n = strlen(line) + 1;
-  char *copy = (char *) memory->smalloc(n*sizeof(char),"copy");
+  char *copy;
+  copy = memory->create(copy, n, "count_words:copy");
   strcpy(copy,line);
 
   char *ptr;
   if (ptr = strchr(copy,'#')) *ptr = '\0';
 
   if (strtok(copy," \t\n\r\f") == NULL) {
-    memory->sfree(copy);
+    memory->destroy(copy);
     return 0;
   }
   n = 1;
   while (strtok(NULL," \t\n\r\f")) n++;
 
-  memory->sfree(copy);
+  memory->destroy(copy);
   return n;
 }
+
+/*----------------------------------------------------------------------------*/
