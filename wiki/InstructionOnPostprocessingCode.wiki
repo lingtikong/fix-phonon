@@ -43,7 +43,7 @@ Assuming you plans to install tricubic under /opt/tricubic/1.0 (version number m
 
   * SPGLIB
 Assuming the spglib will be installed under /opt/spglib/0.7.1; the digits denotes the version numbers.
-  # download [http://spglib.sourceforge.net SPGLIB] (I noticed they have new version available, but I did not test it yet.)
+  # download [http://spglib.sourceforge.net SPGLIB] (The authors of SPGLIB issued a new version recently, which is slightly incompatible with version 0.7.1; if one prefers to use the latest version, simply remove the argument of _num_grid_ from line 736 of phonon.cpp in the post-processing code directory.)
   # {{{tar -xzvf spglib-0.7.1.tar.gz}}}
   # {{{./configure  --prefix=/opt/spglib/0.7.1}}}
   # {{{make}}}
