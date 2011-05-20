@@ -34,8 +34,8 @@ Therefore, the four numbers (_l1, l2, l3, k)_ is mapped to the atom _id_ uniquel
 
 ----
 
-I have a code to generate the position file as well as the map file simultaneously, one can get it via svn:
+I have a code to generate the position file as well as the map file simultaneously for crystals, one can get it from:
 
-[http://code.google.com/p/latgen/source/checkout latgen]
+[http://code.google.com/p/latgen latgen]
 
-But no support will be provided to this code. Generally, one chooses the respective primitive cell to generate the position file and then calculate the phonon dispersions.
+But no support will be provided to this code. Generally, one can always use the option 7 from the main menu of latgen to prepare the necessary files for the crystalline system of interest.
