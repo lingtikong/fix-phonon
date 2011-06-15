@@ -1,4 +1,4 @@
-phana  ver 2.28
+phana  ver 2.30
 
 This program reads the binary file created by fix_phonon
 and helps to analyse the phonon related info.
@@ -23,6 +23,9 @@ The units of the output frequencies by this code is THz for
 LAMMPS units "real", "si", "metal", and "cgs"; in these cases,
 the frequencies are $\nu$ instead of $\omega$.
 
+One is encouraged to visit http://code.google.com/p/fix-phonon/
+to check out the latest revision on fix-phonon and the post-processing
+code.
 
 Author: Ling-Ti Kong
 Jun 2011
