@@ -229,7 +229,7 @@ void Phonon::ldos_rsgf()
   const double tpi = 8.*atan(1.);
   double **Hessian, scale;
   scale = dynmat->eml2f*tpi; scale *= scale;
-  Hessian = memory->create(Hessian, ndim, ndim, "dispersion_ldos_Hessian");
+  Hessian = memory->create(Hessian, ndim, ndim, "phonon_ldos:Hessian");
 
   double q0[3];
   q0[0] = q0[1] = q0[2] = 0.;
