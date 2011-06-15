@@ -11,7 +11,7 @@ The installation of fix-phonon together with LAMMPS is pretty simple, there is n
   # *check out fix-phonon* under _src_ of LAMMPS:
    svn checkout http://fix-phonon.googlecode.com/svn/trunk/ USER-PHONON
   # *edit Makefile* under _src_, append "user-phonon" to the variable "PACKUSER";
-  # *make yes-standard*;
+  # *make yes-kspace*;
   # *make yes-user-phonon*;
   # *make your-platform*; here _your-platform_ should correspond to the correct Makefile under MAKE that works for your platform.
 
