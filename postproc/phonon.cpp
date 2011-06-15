@@ -238,23 +238,49 @@ void Phonon::ldos_rsgf()
   for (int i=0; i<ndim; i++)
   for (int j=0; j<ndim; j++) Hessian[i][j] = dynmat->DM_q[i][j].r*scale;
 
-  double *egvs = new double [ndim];
-  dynmat->geteigen(egvs, 0);
+  if (ndim < 300){
+    double *egvs = new double [ndim];
+    dynmat->geteigen(egvs, 0);
 
-  fmin = fmax = egvs[0];
-  for (int i=1; i<ndim; i++){fmin = MIN(fmin, egvs[i]); fmax = MAX(fmax, egvs[i]);}
-  delete []egvs;
+    fmin = fmax = egvs[0];
+    for (int i=1; i<ndim; i++){fmin = MIN(fmin, egvs[i]); fmax = MAX(fmax, egvs[i]);}
+    delete []egvs;
+  } else {
+    fmin = 0.; fmax = 20.;
+  }
 
   ndos = 201;
   int ik = 0, nit = MAX(ndim*0.1, MIN(ndim,50));
   double eps = 12.; // for Cu with 1000+ atoms, 12 is enough; for small system, eps should be large.
 
   while (1) {
+    int istr, iend, iinc;
     // ask for relevant info
     printf("\nThere are %d atoms in each unit cell of your lattice.\n", dynmat->nucell);
-    printf("Please input the index of atom in the unit cell to evaluate LDOS [%d]: ", ik);
-    if (strlen(gets(str)) > 0) ik = atoi(strtok(str," \t\n\r\f"));
-    if (ik < 0 || ik >= dynmat->nucell) break;
+    printf("Please input the index/index range/index range and increment of atom(s)\n");
+    printf("in the unit cell to evaluate LDOS [%d], q to exit: ", ik);
+    int nr = count_words( gets(str) );
+    if (nr < 1){
+      istr = iend = ik;
+      iinc = 1;
+    } else if (nr == 1) {
+      if (strcmp(str,"q") == 0) break;
+
+      ik = atoi(strtok(str," \t\n\r\f"));
+      if (ik < 0 || ik >= dynmat->nucell) break;
+      istr = iend = ik;
+      iinc = 1;
+    } else if (nr == 2) {
+      istr = atoi(strtok(str," \t\n\r\f"));
+      iend = atoi(strtok(NULL," \t\n\r\f"));
+      iinc = 1;
+      if (istr < 0||iend >= dynmat->nucell||istr > iend) break;
+    } else if (nr >= 3) {
+      istr = atoi(strtok(str," \t\n\r\f"));
+      iend = atoi(strtok(NULL," \t\n\r\f"));
+      iinc = atoi(strtok(NULL," \t\n\r\f"));
+      if (istr<0 || iend >= dynmat->nucell || istr > iend || iinc<1) break;
+    }
 
     printf("Please input the frequency range to evaluate LDOS [%g %g]: ", fmin, fmax);
     if (count_words(gets(str)) >= 2){
@@ -277,16 +303,19 @@ void Phonon::ldos_rsgf()
     if (count_words(gets(str)) > 0) eps = atof(strtok(str," \t\n\r\f"));
     if (eps <= 0.) break;
     
-    // time info
-    Timer *time = new Timer();
-    printf("\nNow to compute the LDOS for atom %d by Real Space Greens function method ...", ik);
-
-    // run real space green's function calculation
-    Green *green = new Green(dynmat->nucell, dynmat->sysdim, nit, fmin, fmax, ndos, eps, Hessian, ik);
-    delete green;
-
-    printf("Done!\n");
-    time->stop(); time->print(); delete time;
+    for (ik = istr; ik <= iend; ik += iinc){
+      // time info
+      Timer *time = new Timer();
+      printf("\nNow to compute the LDOS for atom %d by Real Space Greens function method ...", ik);
+      fflush(stdout);
+  
+      // run real space green's function calculation
+      Green *green = new Green(dynmat->nucell, dynmat->sysdim, nit, fmin, fmax, ndos, eps, Hessian, ik);
+      delete green;
+  
+      printf("Done!\n");
+      time->stop(); time->print(); delete time;
+    }
   }
   memory->destroy(Hessian);
 
@@ -568,6 +597,7 @@ void Phonon::QMesh()
   char str[MAXLINE];
   int nx = dynmat->nx, ny = dynmat->ny, nz = dynmat->nz;
   printf("\nThe q-mesh size from the read dynamical matrix is: %d x %d x %d\n", nx, ny, nz);
+  printf("A denser mesh can be interpolated, but NOTE a too dense mesh can cause segmentation fault.\n");
   printf("Please input your desired q-mesh size [%d %d %d]: ", nx, ny, nz);
   if (count_words(gets(str)) >= 3){
     nx = atoi(strtok(str," \t\n\r\f"));
@@ -723,7 +753,7 @@ void Phonon::QMesh()
   } // end of if (method == 2 && ...
 
   if (method == 2){
-    int mesh[3], shift[3], is_time_reversal = 0;
+    int mesh[3], shift[3], is_time_reversal = 1;
     mesh[0] = nx; mesh[1] = ny; mesh[2] = nz;
     shift[0] = shift[1] = shift[2] = 0;
     int num_grid = mesh[0]*mesh[1]*mesh[2];
@@ -733,7 +763,10 @@ void Phonon::QMesh()
     for (int i=0; i<num_atom; i++)
     for (int j=0; j<3; j++) pos[i][j] = atpos[i][j];
 
-    nq = spg_get_ir_reciprocal_mesh(grid_point, map, num_grid, mesh, shift,
+    //spg_show_symmetry(latvec, pos, attyp,  num_atom, symprec);
+
+    nq = spg_get_ir_reciprocal_mesh(grid_point, map, num_grid, mesh, shift,  // use this line and comment out the following one, if spglib v 0.7.1 is used
+    //nq = spg_get_ir_reciprocal_mesh(grid_point, map, mesh, shift,  // replace the previous line with this one, if spglib 1.0.3 is used
                                is_time_reversal, latvec, pos, attyp, num_atom, symprec);
 
     wt   = memory->create(wt,   nq, "QMesh:wt");
@@ -866,7 +899,7 @@ void Phonon::ldos_egv()
     }
   }
   egvec = NULL;
-  printf("Done!\nNow to normalize the DOSs ...");
+  printf("Done!\nNow to normalize the DOSs ..."); fflush(stdout);
 
   // normalize the measure DOS and LDOS
   Normalize();
@@ -925,7 +958,7 @@ void Phonon::ComputeAll()
 
   printf("\nNow to compute the phonons "); fflush(stdout);
   // now to calculate the frequencies at all q-points
-  if (eigs) memory->destroy(eigs);
+  memory->destroy(eigs);
   eigs = memory->create(eigs, nq,ndim,"QMesh_eigs");
   
   for (int iq=0; iq<nq; iq++){

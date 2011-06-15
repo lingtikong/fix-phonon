@@ -16,7 +16,8 @@ LPKLIB = -L/opt/clapack/3.2.1/lib -lclapack -lblas -lf2c -lm
 TCINC = -I/opt/tricubic/1.0/include
 TCLIB = -L/opt/tricubic/1.0/lib -ltricubic
 #
-# spglib, used to get the irreducible q-points
+# spglib 0.7.1, used to get the irreducible q-points
+# if UFLAG is not set, spglib won't be used.
 UFLAG  = -DUseSPG
 SPGINC = -I/opt/spglib/0.7.1/include
 SPGLIB = -L/opt/spglib/0.7.1/lib -lsymspg

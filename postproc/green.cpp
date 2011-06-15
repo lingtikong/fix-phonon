@@ -21,7 +21,7 @@
  *   Hessian (input, pointer of pointer) mass-weighted force constant matrix, of
  *                           dimension [natom*sysdim][natm*sysdim]; it is actually
  *                           the dynamical matrix at gamma point
- *   iatom   (input, value)  index of the atom to evaluate local phonon DOS
+ *   iatom   (input, value)  index of the atom to evaluate local phonon DOS, from 0
  *******************************************************************************
  * References:
  *  1. Z. Tang and N. R. Aluru, Phys. Rev. B 74, 235441 (2006).
@@ -29,7 +29,7 @@
  *  3. L.T. Kong and L.J. Lewis, Phys. Rev. B 77, 165422 (2008).
  *
  * NOTE: The real-space Green's function method is not expected to work accurately
- *       for small systems, say, system less than 500 atoms.
+ *       for small systems, say, system (unit cell) less than 500 atoms.
  *******************************************************************************/
 
 /*------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ Green::Green(int ntm, int sdim, int niter, double min, double max, int ndos, dou
   H = Hessian; iatom = itm;
 
   memory = new Memory;
-  if (natom < 1 || iatom < 1 || iatom > natom){
+  if (natom < 1 || iatom < 0 || iatom >= natom){
     printf("\nError: Wrong number of total atoms or wrong index of interested atom!\n");
     return;
   }
@@ -97,7 +97,7 @@ void Green::Lanczos()
   v  = new double [ndim];
   w  = new double [ndim];
   
-  int ipos = (iatom-1)*sysdim;
+  int ipos = iatom*sysdim;
 
   // Loop over dimension
   for (int idim=0; idim<sysdim; idim++){
