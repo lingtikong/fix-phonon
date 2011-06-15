@@ -139,14 +139,16 @@ of the system should not exceed the melting temperature to keep in solid state.
 
 [Related commands:]
 
-"fix gfc"_fix_gfc.html
+"compute msd"_compute_msd.html
+
+"fix gfc"_http://code.google.com/p/fix-gfmd
 
 [Note:] Compiling of this fix along with LAMMPS requires that 
 the "FFT3d wrappers of kspace"_kspace_style.html of LAMMPS is included
 while compiling.
 
 [Default:]
-The option defaults are {sysdim} = domain->dimension, {nasr} = 10.
+The option defaults are {sysdim} = domain->dimension, {nasr} = 20.
 
 :line
 

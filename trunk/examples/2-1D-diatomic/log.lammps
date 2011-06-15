@@ -20062,14 +20062,14 @@ Step Temp PotEng TotEng
  1999800 0.0059277298 0.0020055057 0.0048767498 
  1999900 0.0059290305  0.002299977 0.0051718512 
  2000000 0.0047343315 0.0026625608 0.0049557526 
-Loop time of 46.25 on 1 procs for 2000000 steps with 64 atoms
+Loop time of 36.9726 on 1 procs for 2000000 steps with 64 atoms
 
 Pair  time (%) = 0 (0)
-Bond  time (%) = 11.8423 (25.605)
-Neigh time (%) = 3.24463 (7.01541)
-Comm  time (%) = 3.30543 (7.14686)
-Outpt time (%) = 0.125641 (0.271657)
-Other time (%) = 27.732 (59.961)
+Bond  time (%) = 8.9556 (24.2222)
+Neigh time (%) = 2.22293 (6.01237)
+Comm  time (%) = 2.5284 (6.83859)
+Outpt time (%) = 2.09206 (5.65841)
+Other time (%) = 21.1736 (57.2684)
 
 Nlocal:    64 ave 64 max 64 min
 Histogram: 1 0 0 0 0 0 0 0 0 0

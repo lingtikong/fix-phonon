@@ -36,6 +36,7 @@ FixStyle(phonon,FixPhonon)
 #include <map>
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 
 namespace LAMMPS_NS {
 

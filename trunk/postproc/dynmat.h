@@ -42,6 +42,8 @@ private:
   
   Memory *memory;
   int npt, fftdim2;
+  double *egv_gamma;
+  int flag_gamma;
 
   int nasr;
   void EnforceASR();
@@ -54,5 +56,7 @@ private:
 
   void car2dir(int); // to convert basis from cartisian coordinate into factional.
   void real2rec();
+  void GaussJordan(int, double *);
+
 };
 #endif

@@ -1,4 +1,4 @@
-phana  ver. 2.25
+phana  ver 2.28
 
 This program reads the binary file created by fix_phonon
 and helps to analyse the phonon related info.
@@ -11,6 +11,11 @@ The tricubic library is also needed to to tricubic interpolations,
 which could be obtained from:
 http://orca.princeton.edu/francois/software/tricubic/
 
+The spglib (version 0.7.1) is optionally needed, enabling one to
+evaluate the phonon density of states or vibrational thermal
+properties using only the irreducible q-points in the first
+Brillouin zone.
+
 To compile the code, one needs therefore to install the above
 libraries and set the paths correctly in the Makefile.
 
@@ -20,4 +25,4 @@ the frequencies are $\nu$ instead of $\omega$.
 
 
 Author: Ling-Ti Kong
-May 19, 2011
+Jun 2011
