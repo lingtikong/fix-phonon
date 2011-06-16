@@ -1,0 +1,110 @@
+#Short description of the post-processing code and the format of files generated
+
+= Introduction =
+
+The post-processing code, _phana_, is driven by menu, one can follow the menu step by step to perform the post-processing tasks. It generates several kinds of files, depending on the task you selected from the main menu. In general, the header lines of these files is self-explanatory, but sometimes one may forget to check them. This page provides a short description of them. 
+
+= Details =
+
+The post-processing code _phana_ can be invoked by
+{{{
+phana binary-file-name
+}}}
+where _binary-file-name_ is the binary file produced by fix-phonon, which carries the measured dynamical matrice; usually one will get several/many these binary files, and the last one is in general preferred, as the information it carries is averaged over a longer time range than the others.
+
+Alternatively, one can also invoke _phana_ simply by
+{{{
+phana
+}}}
+then the code will ask for the binary file name.
+
+After reading the binary file, _phana_ will display some info read from the file, and then computes the eigenvalues of the _force constant matrix_ at the Gamma point; usually one will expected some (3 for 3D case) _zero_ frequencies, which correspond to the acoustic modes, however, due to finite size effect, this is not strictly followed. We need therefore to apply the acoustic sum rule (ASR) "manually". The code will ask for the desired number of iterations to apply ASR. After that the code will compute the eigenvalues of the modified _force constant matrix_ at Gamma, to show how good the enforcement of ASR.
+
+Then, a menu will be displayed, ask for the desired interpolation method used; in general the tricubic one is recommended, and the default.
+
+Afterwards, the main menu shows up, and will be described one by one.
+
+*1. Phonon DOS evaluation*
+
+The "Phonon DOS evaluation" option enables one to calculate the phonon density of states based on the binary file measured by fix-phonon.
+
+Firstly, the code will ask for the desired q-mesh size for phonon DOS; usually the q-mesh size corresponds to the simulation box size is not big enough to get a smooth phonon DOS, one can get a smooth one via a denser q-mesh than the one measured.
+
+Secondly, the way to generate the q-points based on the q-mesh size input will be asked; if spglib is used (need to set -DUseSPG in the makefile of _phana_). If the "Monkhorst-Pack" method is chosen, one is asked to confirm the primitive cell info. If incorrect, one can provide the correct primitive cell info either by file or input manually.
+
+The remaining part should not need any further explanation.
+
+The generated file has two columns, the first column is the vibrational frequency, and the second column is the density of states. The header lines reads like:
+{{{
+# frequency  DOS
+#THz  number
+}}}
+
+*2.  Phonon dispersion curves*
+
+Option two of the main menu enables one to calculate the phonon dispersion curves along any desired lines in the Brillouin zone.
+
+Firstly, one is asked to input the output file name;
+
+Secondly, one is asked to input the coordinates of the starting point, ending point, as well as the number of points in between these two points, of the line in the Brillouin zone.  The coordinates of these points are in unit of the basis vectors of the corresponding Brillouin zone, as is shown after reading the binary file. One can repeat this procedure several times to get more lines; one can exit from the loop by inputing "q" when asked for the coordinates of a new starting point.
+
+The output file contains the phonon dispersion info, with the first three columns the fractional coordinates of the corresponding q-point; the fourth column is the accumulated distance of current q-point to the first one, which can be used as the _x_ axis when plotting. The remaining columns are the frequencies of the phonons, with each column corresponds to one branch of the dispersion curve.
+
+The header lines of the output file reads:
+{{{
+# q     qr    freq
+# 2pi/L  2pi/L THz
+}}}
+Please note that the unit of the frequencies will be correct only if lammps was run with unit of _si_, _metal_, _real_, or _cgs_.
+
+*3 Dynamical matrix at arbitrary _q_*
+
+This option simply enables one to output the dynamical matrix at a desired q-point to file. Please note that the elements of the dynamical matrix are complex numbers, each contains a real and an imaginary part.
+
+*4 Vibrational frequencies at arbitrary _q_*
+
+This option calculates and displays the frequencies at any desired _q_-point.
+
+*5 Dispersion-like curve for dynamical matrix*
+
+The function of this option is quite similar to that of "*2*", while instead of writing out the frequencies, it writes the elements of the dynamical matrix _D,,i,j,,_, where "_j_" goes faster than "_i_".
+
+*6 Vibrational thermodynamical properties*
+
+The function of this option is to calculate the vibrational thermodynamical properties. Firstly, like in phonon DOS evaluation, the code asks for the _q_-mesh size over which the thermodynamical properties will be averaged.
+Secondly, it asks for the file name to output the thermal properties. And thirdly, it ask for the temperature at which the thermal properties will be evaluated; "enter" or non-positive numbers will terminate the input.
+
+The header of the output file reads:
+{{{
+#Temp   Uvib    Svib     Fvib    ZPE      Cvib
+# K      eV      Kb       eV      eV       Kb
+}}}
+One sees that the first column is the temperature at which the vibrational thermal properties are evaluated; the second column is the vibrational internal energy; the third column is the vibrational entropy; the fourth column is the vibrational free energy; the fifth column is the zero point energy, it should be invariant against temperature; the sixth column is the vibrational thermal capacity. All thermal properties are actually summed over all atoms in a primitive cell, thus divided by the number of atoms in each unit cell give you the corresponding per-atom quantity.
+
+*7 Local phonon DOS from eigenvectors*
+
+This option enables one to compute the local density of states for a desired atom in the unit cell. For mathematical expressions, one is referred to [http://link.aps.org/doi/10.1103/PhysRevB.77.165422 Phys. Rev. B 77, 165422 (2008).] The procedure is similar to the evaluation of PDOS ("*1*"), but that it does not only output the total PDOS (as in option "*1*"), but also output the local density of states in "pldos`_`_k_.dat" for the _k_th atom, where "_k_" will be replaced by the value of "_k_".
+
+In general, this option works for all cases, but when your primitive cell contains too many atoms, it would be inefficient; in this case, one can turn to option "*8*" instead.
+
+The format of the full DOS is the same as that generated by option "*1*". The header lines of the "pldos`_`_k_.dos" reads:
+{{{
+#freq xDOS yDOS zDOS total
+}}}
+Clearly, the first column is the frequency, in unit of "THz", hopefully; column 2-4 are the _x_, _y_, and _z_ component of the local phonon density of states, respectively. And the 5th column is the total local PDOS, i.e., the sum of column 2-4.
+
+*8 Local phonon DOS by RSGF method*
+
+This option enables one to compute the local phonon density of states by means of the real space Green's function method; for the underlying theory or detailed mathematics, the readers are referred to [http://link.aps.org/doi/10.1103/PhysRevB.77.165422 Phys. Rev. B 77, 165422 (2008)] and [http://prb.aps.org/abstract/PRB/v74/i23/e235441 Phys. Rev. B 74, 235441 (2006)].
+
+In practice, this option only works if your primitive cell contains many atoms, say, more than 100; but not guaranteed. (Please note that in this case, Fix-Phonon will be very in-efficient, although it should work as well.)
+
+Once this option is selected from the main menu, the code will ask one to input either the index of a particular atom, or an index range (inclusive), or an index range together with a step size, for the atoms whose local phonon density of states will be evaluated. The local phonon DOS will be written to file "ldos`_`_k_.dat", where "_k_" is the index of the atom.
+
+The header lines of the "ldos`_`_k_.dat" reads:
+{{{
+# omega nu  ldos_x ldos_y ldos_z ldos
+}}}
+Again, clearly, the 1st column is the angular frequency, and the 2nd column is the phonon frequency, the 3-5th columns are the _x_, _y_, _z_ component of the local PDOS, and the 6th column is the total local PDOS.
+
+----
