@@ -10,7 +10,7 @@ The post-processing code _phana_ can be invoked by
 {{{
 phana binary-file-name
 }}}
-where _binary-file-name_ is the binary file produced by fix-phonon, which carries the measured dynamical matrice; usually one will get several/many these binary files, and the last one is in general preferred, as the information it carries is averaged over a longer time range than the others.
+where _binary-file-name_ is the binary file produced by fix-phonon, which carries the measured dynamical matrice; usually one will get several/many these binary files, and the last one is in general preferred, as the information it carries is averaged over a longer time interval than the others.
 
 Alternatively, one can also invoke _phana_ simply by
 {{{
