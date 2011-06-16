@@ -407,7 +407,7 @@ void DynMat::EnforceASR()
   for (int i=0; i<fftdim; i++){
     printf("%lg ", egvs[i]);
     if (i%10 == 9) printf("\n");
-    if (i == 99){ printf("...... (%d more skiped)\n", fftdim-100); break;}
+    if (i == 99){ printf("...... (%d more skiped)", fftdim-100); break;}
   }
   printf("\n"); for (int i=0; i<60; i++) printf("="); printf("\n\n");
 
