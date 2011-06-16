@@ -306,14 +306,13 @@ void Phonon::ldos_rsgf()
     for (ik = istr; ik <= iend; ik += iinc){
       // time info
       Timer *time = new Timer();
-      printf("\nNow to compute the LDOS for atom %d by Real Space Greens function method ...", ik);
+      printf("\nNow to compute the LDOS for atom %d by Real Space Greens function method ...\n", ik);
       fflush(stdout);
   
       // run real space green's function calculation
       Green *green = new Green(dynmat->nucell, dynmat->sysdim, nit, fmin, fmax, ndos, eps, Hessian, ik);
       delete green;
   
-      printf("Done!\n");
       time->stop(); time->print(); delete time;
     }
   }
