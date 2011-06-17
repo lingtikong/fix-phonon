@@ -4,6 +4,7 @@
 
 The post-processing code, _phana_, is driven by menu, one can follow the menu step by step to perform the post-processing tasks. It generates several kinds of files, depending on the task you selected from the main menu. In general, the header lines of these files is self-explanatory, but sometimes one may forget to check them. This page provides a short description of them. 
 
+----
 = Details =
 
 The post-processing code _phana_ can be invoked by
@@ -24,6 +25,7 @@ Then, a menu will be displayed, ask for the desired interpolation method used; i
 
 Afterwards, the main menu shows up, and will be described one by one.
 
+----
 *1. Phonon DOS evaluation*
 
 The "Phonon DOS evaluation" option enables one to calculate the phonon density of states based on the binary file measured by fix-phonon.
@@ -106,5 +108,9 @@ The header lines of the "ldos`_`_k_.dat" reads:
 # omega nu  ldos_x ldos_y ldos_z ldos
 }}}
 Again, clearly, the 1st column is the angular frequency, and the 2nd column is the phonon frequency, the 3-5th columns are the _x_, _y_, _z_ component of the local PDOS, and the 6th column is the total local PDOS.
+
+----
+
+p.s., when user input is required, the value appears in the bracket is the default value; if one presses "enter" instead of input a value, the default value will be assumed.
 
 ----
