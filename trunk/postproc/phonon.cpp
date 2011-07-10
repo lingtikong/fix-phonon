@@ -258,7 +258,7 @@ void Phonon::ldos_rsgf()
     // ask for relevant info
     printf("\nThere are %d atoms in each unit cell of your lattice.\n", dynmat->nucell);
     printf("Please input the index/index range/index range and increment of atom(s)\n");
-    printf("in the unit cell to evaluate LDOS [%d], q to exit: ", ik);
+    printf("in the unit cell to evaluate LDOS, q to exit [%d]: ", ik);
     int nr = count_words( gets(str) );
     if (nr < 1){
       istr = iend = ik;

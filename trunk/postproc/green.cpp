@@ -295,7 +295,7 @@ void Green::writeLDOS()
     w += dw;
   }
   fclose(fp);
-  printf("Local PDOS info written to file: %s", fname);
+  printf("Local PDOS info written to file: %s. ", fname);
   delete []fname;
 return;
 }
