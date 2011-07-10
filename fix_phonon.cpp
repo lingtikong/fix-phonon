@@ -212,7 +212,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
 FixPhonon::~FixPhonon()
 {
   // compute and output final GFC results
-  if (GFcounter%nfreq) postprocess();
+  if (ifreq > 0 && ifreq != nfreq) postprocess();
   if (me == 0) fclose(flog);
 
   // delete locally stored array
