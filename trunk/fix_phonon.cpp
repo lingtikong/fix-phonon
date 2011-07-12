@@ -209,12 +209,17 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
 
 /* ---------------------------------------------------------------------- */
 
-FixPhonon::~FixPhonon()
+void FixPhonon::post_run()
 {
   // compute and output final GFC results
   if (ifreq > 0 && ifreq != nfreq) postprocess();
   if (me == 0) fclose(flog);
+}
 
+/* ---------------------------------------------------------------------- */
+
+FixPhonon::~FixPhonon()
+{
   // delete locally stored array
   memory->destroy(RIloc);
   memory->destroy(RIall);
