@@ -209,7 +209,7 @@ void Phonon::writeLDOS()
     for (int i=0; i<ndos; i++){
       fprintf(fp,"%lg", freq);
       double total = 0.;
-      for (int idim=0; idim<sysdim; idim++) {fprintf(fp," %lg",ldos[i][ilocal][idim]); total += ldos[i][ilocal][idim];}
+      for (int idim=0; idim<sysdim; idim++) {fprintf(fp," %lg",ldos[ilocal][i][idim]); total += ldos[ilocal][i][idim];}
       fprintf(fp," %lg\n", total*one3);
       freq += df;
     }
@@ -857,13 +857,13 @@ void Phonon::ldos_egv()
   memory->destroy(ldos);
 
   dos  = memory->create(dos, ndos,"ldos_egv:dos");
-  ldos = memory->create(ldos,ndos,nlocal,sysdim,"ldos_egv:ldos");
+  ldos = memory->create(ldos,nlocal,ndos,sysdim,"ldos_egv:ldos");
 
-  for (int i=0; i<ndos; i++){
-    dos[i] = 0.;
-    for (int j=0; j<nlocal; j++)
-    for (int k=0; k<sysdim; k++) ldos[i][j][k] = 0.;
-  }
+  for (int i=0; i<ndos; i++) dos[i] = 0.;
+
+  for (int ilocal=0; ilocal<nlocal; ilocal++)
+  for (int i=0; i<ndos; i++)
+  for (int idim=0; idim<sysdim; idim++) ldos[ilocal][i][idim] = 0.;
 
   int nprint;
   if (nq > 10) nprint = nq/10;
@@ -888,10 +888,10 @@ void Phonon::ldos_egv()
 
         for (int ilocal=0; ilocal<nlocal; ilocal++){
           int ipos = locals[ilocal]*sysdim;
-          for (int k=0; k<sysdim; k++){
-            double dr = egvec[idim][ipos+k].r, di = egvec[idim][ipos+k].i;
+          for (int jdim=0; jdim<sysdim; jdim++){
+            double dr = egvec[idim][ipos+jdim].r, di = egvec[idim][ipos+jdim].i;
             double norm = dr * dr + di * di;
-            ldos[hit][ilocal][k] += wt[iq] * norm;
+            ldos[ilocal][hit][jdim] += wt[iq] * norm;
           }
         }
       }
@@ -933,12 +933,12 @@ void Phonon::Normalize()
     for (int ilocal=0; ilocal<nlocal; ilocal++)
     for (int idim=0; idim<sysdim; idim++){
       odd = even = 0.;
-      for (int i=1; i<ndos-1; i +=2) odd  += ldos[i][ilocal][idim];
-      for (int i=2; i<ndos-1; i +=2) even += ldos[i][ilocal][idim];
-      sum = ldos[0][ilocal][idim] + ldos[ndos-1][ilocal][idim];
+      for (int i=1; i<ndos-1; i +=2) odd  += ldos[ilocal][i][idim];
+      for (int i=2; i<ndos-1; i +=2) even += ldos[ilocal][i][idim];
+      sum = ldos[ilocal][0][idim] + ldos[ilocal][ndos-1][idim];
       sum += 4.*odd + 2.*even;
       sum = 3.*rdf/sum;
-      for (int i=0; i<ndos; i++) ldos[i][ilocal][idim] *= sum;
+      for (int i=0; i<ndos; i++) ldos[ilocal][i][idim] *= sum;
     }
   }
 
