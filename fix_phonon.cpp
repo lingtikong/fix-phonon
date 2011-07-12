@@ -268,11 +268,16 @@ int FixPhonon::setmask()
 
 void FixPhonon::init()
 {
-  // warn if more than one gfc fix
+  // warn if more than one fix-phonon
   int count = 0;
   for (int i=0;i<modify->nfix;i++) if (strcmp(modify->fix[i]->style,"gfc") == 0) count++;
   if (count > 1 && me == 0) error->warning("More than one fix phonon defined"); // just warn, but allowed.
+}
 
+/* ---------------------------------------------------------------------- */
+
+void FixPhonon::setup()
+{
   // initialize accumulating variables
   for (int i=0; i<sysdim; i++) TempSum[i] = 0.;
   for (int i=0; i<mynpt; i++){

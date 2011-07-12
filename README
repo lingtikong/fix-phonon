@@ -22,4 +22,4 @@ NOTE: This package won't work if LAMMPS is compiled as serial version
       complete and some functions FixPhonon needed are not implemented.
 
 Author: Ling-Ti Kong, konglt@sjtu.edu.cn
-version: 1.30 / Jun 2011
+version: 1.37 / Jul 2011
