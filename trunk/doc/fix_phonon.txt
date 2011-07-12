@@ -168,4 +168,4 @@ L.T. Kong, C. Denniston, and Martin H. M&uuml;ser,
 
 :link(kong2011)
 [(Kong2011)] L.T. Kong, {Phonon dispersion measured directly from molecular dynamics simulations},
-"Computer Physics Communications, in press, 2011, doi:10.1016/j.cpc.2011.04.019"_http://dx.doi.org/10.1016/j.cpc.2011.04.019
+"Computer Physics Communications [182](10):2201-2207, (2011)."_http://dx.doi.org/10.1016/j.cpc.2011.04.019
