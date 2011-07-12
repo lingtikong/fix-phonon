@@ -11,17 +11,18 @@
  * The class of Green is designed to evaluate the LDOS via the Green's Function
  * method. The meaning of input/output parameters are as follows:
  *
- *   natom   (input, value)  total number of atoms in system
- *   sysdim  (input, value)  dimension of the system; usually 3
- *   nit     (input, value)  maximum iterations during Lanczos diagonalization
- *   wmin    (input, value)  minimum value for the angular frequency
- *   wmax    (input, value)  maximum value for the angular frequency
- *   nw      (input, value)  total number of points in LDOS
- *   epson   (input, value)  epson that govens the width of delta-function
+ *   ntm     (input, value)  total number of atoms in system
+ *   sdim    (input, value)  dimension of the system; usually 3
+ *   niter   (input, value)  maximum iterations during Lanczos diagonalization
+ *   min     (input, value)  minimum value for the angular frequency
+ *   max     (input, value)  maximum value for the angular frequency
+ *   ndos    (input, value)  total number of points in LDOS
+ *   eps     (input, value)  epson that govens the width of delta-function
  *   Hessian (input, pointer of pointer) mass-weighted force constant matrix, of
  *                           dimension [natom*sysdim][natm*sysdim]; it is actually
  *                           the dynamical matrix at gamma point
- *   iatom   (input, value)  index of the atom to evaluate local phonon DOS, from 0
+ *   itm     (input, value)  index of the atom to evaluate local phonon DOS, from 0
+ *   lpdos   (output, array) double array of size (ndos, sdim)
  *******************************************************************************
  * References:
  *  1. Z. Tang and N. R. Aluru, Phys. Rev. B 74, 235441 (2006).
@@ -35,12 +36,13 @@
 /*------------------------------------------------------------------------------
  * Constructor is used as the main driver
  *----------------------------------------------------------------------------*/
-Green::Green(int ntm, int sdim, int niter, double min, double max, int ndos, double eps, double **Hessian, int itm)
+Green::Green(int ntm, int sdim, int niter, double min, double max, int ndos, double eps, double **Hessian, int itm, double **lpdos)
 {
   const double tpi = 8.*atan(1.);
   natom = ntm; sysdim = sdim; nit = niter; epson = eps;
   wmin = min*tpi; wmax = max*tpi; nw = ndos + (ndos+1)%2;
   H = Hessian; iatom = itm;
+  ldos = lpdos;
 
   memory = new Memory;
   if (natom < 1 || iatom < 0 || iatom >= natom){
@@ -57,16 +59,13 @@ Green::Green(int ntm, int sdim, int niter, double min, double max, int ndos, dou
   dw = (wmax - wmin)/double(nw-1);
   alpha = memory->create(alpha, sysdim,nit,  "Green_Green:alpha");
   beta  = memory->create(beta,  sysdim,nit+1,"Green_Green:beta");
-  ldos  = memory->create(ldos,  nw,sysdim, "Green_Green:ldos");
+  //ldos  = memory->create(ldos,  nw,sysdim, "Green_Green:ldos");
 
   // use Lanczos algorithm to diagonalize the Hessian
   Lanczos();
-  // Get the inverser of the treated hessian by continued fractional method
-  //recursion();
-  Recursion();
 
-  // write the result
-  writeLDOS();
+  // Get the inverser of the treated hessian by continued fractional method
+  Recursion();
 
 return;
 }
@@ -77,9 +76,9 @@ return;
 Green::~Green()
 {
   H = NULL;
+  ldos = NULL;
   memory->destroy(alpha);
   memory->destroy(beta);
-  memory->destroy(ldos);
 
   delete memory;
 
@@ -214,9 +213,6 @@ void Green::Recursion()
   delete []xmin;
   delete []xmax;
 
-  // normalize the computed LDOS
-  Normalize();
-
 return;
 }
 
@@ -247,55 +243,7 @@ void Green::recursion()
     w += dw;
   }
 
-  // normalize the LDOS computed
-  Normalize();
-
 return;
 }
 
-/*------------------------------------------------------------------------------
- * Private method to normalize the LDOS computed
- *----------------------------------------------------------------------------*/
-void Green::Normalize()
-{
-  // normalize ldos
-  for (int idim=0; idim<sysdim; idim++){
-    double odd = 0., even = 0.;
-    for (int i=1; i<nw-1; i += 2) odd  += ldos[i][idim];
-    for (int i=2; i<nw-1; i += 2) even += ldos[i][idim];
-    double sum = ldos[0][idim] + ldos[nw-1][idim];
-    sum += 4.*odd + 2.*even;
-    sum = 24./(sum*dw)*atan(1.);
-    for (int i=0; i<nw; i++) ldos[i][idim] *= sum;
-  }
-
-return;
-}
-
-/*------------------------------------------------------------------------------
- * Private method to write the LDOS info to file
- *----------------------------------------------------------------------------*/
-void Green::writeLDOS()
-{
-  const double rtpi = 1./(8.*atan(1.));
-  char str[MAXLINE], *fname;
-  sprintf(str,"ldos_%d.dat",iatom);
-  int n = strlen(str)+1;
-  fname = new char[n];
-  strcpy(fname, str);
-
-  FILE *fp = fopen(fname, "w");
-  fprintf(fp,"# omega nu  ldos_x ldos_y ldos_z ldos\n");
-  double w = wmin;
-  for (int i=0; i<nw; i++){
-    double tldos = 0.;
-    fprintf(fp,"%lg %lg", w , w*rtpi);
-    for (int idim=0; idim<sysdim; idim++){fprintf(fp," %lg", ldos[i][idim]); tldos+= ldos[i][idim];}
-    fprintf(fp," %lg\n", tldos);
-    w += dw;
-  }
-  fclose(fp);
-  printf("Local PDOS info written to file: %s. ", fname);
-  delete []fname;
-return;
-}
+/*------------------------------------------------------------------------------*/

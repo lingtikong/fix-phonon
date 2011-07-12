@@ -173,9 +173,11 @@ void Phonon::writeDOS()
 
   char str[MAXLINE];
   // now to output the phonon DOS
-  printf("\nPlease input the filename to output DOS [pdos.dat]: ");
+  printf("\nPlease input the filename to write DOS [pdos.dat]: ");
   if (count_words(gets(str)) < 1) strcpy(str, "pdos.dat");
   char *fname = strtok(str," \t\n\r\f");
+
+  printf("The total phonon DOS will be written to file: %s\n", fname);
 
   FILE *fp = fopen(fname, "w"); fname = NULL;
   fprintf(fp,"# frequency  DOS\n");
@@ -197,6 +199,7 @@ void Phonon::writeLDOS()
 {
   if (ldos == NULL) return;
 
+  printf("The phonon LDOSs will be written to file(s) : pldos_?.dat\n\n");
   const double one3 = 1./double(sysdim);
   char str[MAXLINE];
   for (int ilocal=0; ilocal<nlocal; ilocal++){
@@ -303,18 +306,41 @@ void Phonon::ldos_rsgf()
     if (count_words(gets(str)) > 0) eps = atof(strtok(str," \t\n\r\f"));
     if (eps <= 0.) break;
     
+    // prepare array for local pdos
+    nlocal = 0;
+    for (ik = istr; ik <= iend; ik += iinc) nlocal++;
+    memory->destroy(ldos);
+    ldos = memory->create(ldos,nlocal,ndos,dynmat->sysdim,"ldos_rsgf:ldos");
+
+    memory->destroy(locals);
+    locals = memory->create(locals, nlocal, "ldos_rsgf:locals");
+
+    df  = (fmax-fmin)/double(ndos-1);
+    rdf = 1./df;
+
+    // to measure the LDOS via real space Green's function method
+    int ilocal = 0;
     for (ik = istr; ik <= iend; ik += iinc){
+      locals[ilocal] = ik;
+
       // time info
       Timer *time = new Timer();
       printf("\nNow to compute the LDOS for atom %d by Real Space Greens function method ...\n", ik);
       fflush(stdout);
   
       // run real space green's function calculation
-      Green *green = new Green(dynmat->nucell, dynmat->sysdim, nit, fmin, fmax, ndos, eps, Hessian, ik);
+      Green *green = new Green(dynmat->nucell, dynmat->sysdim, nit, fmin, fmax, ndos, eps, Hessian, ik, ldos[ilocal++]);
       delete green;
   
       time->stop(); time->print(); delete time;
     }
+
+    Normalize();
+    writeLDOS();
+
+    // evaluate the local vibrational thermal properties optionally
+    local_therm();
+
   }
   memory->destroy(Hessian);
 
@@ -582,6 +608,120 @@ void Phonon::therm()
     if (count_words(gets(str)) < 1) break;
     T = atof(strtok(str," \t\n\r\f"));
   } while (T > 0.);
+  fclose(fp);
+
+return;
+}
+
+/* ----------------------------------------------------------------------------
+ * Private method to calculate the local thermal properties
+ * ---------------------------------------------------------------------------- */
+void Phonon::local_therm()
+{
+  char str[MAXLINE];
+  printf("\nWould you like to compute the local thermal properties (y/n)[n]: ");
+  if (strlen(gets(str)) < 1) return;
+  if (strcmp(str,"y") != 0 && strcmp(str, "Y") != 0 && strcmp(str, "yes") != 0) return;
+
+  printf("Please input the filename to output vibrational thermal info [localtherm.dat]: ");
+  if (strlen(gets(str)) < 1) strcpy(str, "localtherm.dat");
+
+  FILE *fp = fopen(strtok(str," \t\n\r\f"), "w");
+  fprintf(fp,"# atom Temp  U_vib (eV)    S_vib (kB)    F_vib (eV)    C_vib (kB)     ZPE (eV)\n");
+  fprintf(fp,"#           ------------  ------------  -----------   -----------   ------------\n");
+  fprintf(fp,"#            Ux Uy Uz Ut   Sx Sy Sz St   Fx Fy Fz Ft   Cx Cy Cz Ct   Zx Zy Zz Zt\n");
+  fprintf(fp,"#  1   2     3  4  5  6    7  8  9  10   11 12 13 14   15 16 17 18   19 20 21 22\n");
+  fprintf(fp,"#-------------------------------------------------------------------------------\n");
+
+  double **Uvib, **Svib, **Fvib, **Cvib, **ZPE;
+  Uvib = memory->create(Uvib,nlocal,sysdim,"local_therm:Uvib");
+  Svib = memory->create(Svib,nlocal,sysdim,"local_therm:Svib");
+  Fvib = memory->create(Fvib,nlocal,sysdim,"local_therm:Fvib");
+  Cvib = memory->create(Cvib,nlocal,sysdim,"local_therm:Cvib");
+  ZPE  = memory->create(ZPE ,nlocal,sysdim,"local_therm:ZPE");
+  // constants          J.s             J/K                J
+  const double h = 6.62606896e-34, Kb = 1.380658e-23, eV = 1.60217733e-19;
+  double T = dynmat->Tmeasure;
+  while (1){
+    printf("\nPlease input the temperature at which to evaluate the local vibrational\n");
+    printf("thermal properties, non-positive number to exit [%g]: ", T);
+    if (strlen(gets(str)) > 0){
+      T = atoi(strtok(str," \t\n\r\f"));
+      if (T <= 0.) break;
+    }
+    // constants under the same temperature; assuming angular frequency in THz
+    double h_o_KbT = h/(Kb*T)*1.e12, KbT_in_eV = Kb*T/eV;
+
+    for (int i=0; i<nlocal; i++)
+    for (int j=0; j<sysdim; j++) Uvib[i][j] = Svib[i][j] = Fvib[i][j] = Cvib[i][j] = ZPE[i][j] = 0.;
+  
+    double freq = fmin-df;
+    for (int i=0; i<ndos; i++){
+      freq += df;
+      if (freq <= 0.) continue;
+  
+      double x = freq * h_o_KbT;
+      double expterm = 1./(exp(x)-1.);
+  
+      double Stmp = x*expterm - log(1.-exp(-x));
+      double Utmp = (0.5+expterm)*x;
+      double Ftmp = log(2.*sinh(0.5*x));
+      double Ctmp = x*x*exp(x)*expterm*expterm;
+      double Ztmp = 0.5*h*freq;
+  
+      for (int il=0; il<nlocal; il++)
+      for (int idim=0; idim<sysdim; idim++){
+        Uvib[il][idim] += ldos[il][i][idim]*Utmp;
+        Svib[il][idim] += ldos[il][i][idim]*Stmp;
+        Fvib[il][idim] += ldos[il][i][idim]*Ftmp;
+        Cvib[il][idim] += ldos[il][i][idim]*Ctmp;
+        ZPE [il][idim] += ldos[il][i][idim]*Ztmp;
+      }
+    }
+    for (int il=0; il<nlocal; il++)
+    for (int idim=0; idim<sysdim; idim++){
+      Uvib[il][idim] *= KbT_in_eV*df;
+      Svib[il][idim] *= df;
+      Fvib[il][idim] *= KbT_in_eV*df;
+      Cvib[il][idim] *= df;
+      ZPE [il][idim] /= eV*1.e-12*rdf;
+    }
+
+    // output result under current temperature
+    for (int il=0; il<nlocal; il++){
+      fprintf(fp,"%d %g ", locals[il], T);
+      double total = 0.;
+      for (int idim=0; idim<sysdim; idim++){
+        fprintf(fp,"%g ", Uvib[il][idim]);
+        total += Uvib[il][idim];
+      }
+      fprintf(fp,"%g ", total); total = 0.;
+
+      for (int idim=0; idim<sysdim; idim++){
+        fprintf(fp,"%g ", Svib[il][idim]);
+        total += Svib[il][idim];
+      }
+      fprintf(fp,"%g ", total); total = 0.;
+
+      for (int idim=0; idim<sysdim; idim++){
+        fprintf(fp,"%g ", Fvib[il][idim]);
+        total += Fvib[il][idim];
+      }
+      fprintf(fp,"%g ", total); total = 0.;
+
+      for (int idim=0; idim<sysdim; idim++){
+        fprintf(fp,"%g ", Cvib[il][idim]);
+        total += Cvib[il][idim];
+      }
+      fprintf(fp,"%g ", total); total = 0.;
+
+      for (int idim=0; idim<sysdim; idim++){
+        fprintf(fp,"%g ", ZPE[il][idim]);
+        total += ZPE[il][idim];
+      }
+      fprintf(fp,"%g\n", total);
+    }
+  }
   fclose(fp);
 
 return;
@@ -908,6 +1048,9 @@ void Phonon::ldos_egv()
   // to write the DOSes
   writeDOS();
   writeLDOS();
+
+  // evaluate the local vibrational thermal properties optionally
+  local_therm();
 
 return;
 }

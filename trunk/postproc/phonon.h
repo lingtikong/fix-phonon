@@ -36,6 +36,7 @@ private:
 
   void ldos_egv();
   void ldos_rsgf();
+  void local_therm();
 
   void dmanyq();
   void vfanyq();
