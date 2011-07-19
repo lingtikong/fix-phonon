@@ -47,7 +47,7 @@ class FixPhonon : public Fix {
 
   int  setmask();
   void init();
-  void setup();
+  void setup(int);
   void end_of_step();
   void post_run();
   double memory_usage();
