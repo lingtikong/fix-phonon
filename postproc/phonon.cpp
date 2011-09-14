@@ -440,17 +440,22 @@ void Phonon::vfanyq()
   char str[MAXLINE];
   double q[3], egvs[ndim];
   
-  do printf("Please input the q-point to compute the frequencies:");
-  while (count_words(gets(str)) < 3);
-  q[0] = atof(strtok(str," \t\n\r\f"));
-  q[1] = atof(strtok(NULL," \t\n\r\f"));
-  q[2] = atof(strtok(NULL," \t\n\r\f"));
+  while (1){
+    printf("Please input the q-point to compute the frequencies, q to exit: ");
+    if (count_words(gets(str)) < 3) break;
 
-  dynmat->getDMq(q);
-  dynmat->geteigen(egvs, 0);
-  printf("q-point: [%lg %lg %lg]\n", q[0], q[1], q[2]);
-  printf("Vibrational frequencies at this q-point:\n");
-  for (int i=0; i<ndim; i++) printf("%lg ", egvs[i]); printf("\n\n");
+    q[0] = atof(strtok(str," \t\n\r\f"));
+    q[1] = atof(strtok(NULL," \t\n\r\f"));
+    q[2] = atof(strtok(NULL," \t\n\r\f"));
+  
+    dynmat->getDMq(q);
+    dynmat->geteigen(egvs, 0);
+    printf("q-point: [%lg %lg %lg], ", q[0], q[1], q[2]);
+    printf("vibrational frequencies at this q-point:\n");
+    for (int i=0; i<ndim; i++) printf("%lg ", egvs[i]); printf("\n\n");
+  }
+
+return;
 }
 
 /* ----------------------------------------------------------------------------
