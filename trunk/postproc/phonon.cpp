@@ -440,7 +440,7 @@ void Phonon::vfanyq()
   char str[MAXLINE];
   double q[3], egvs[ndim];
   
-  do printf("Please input the q-point to output the dynamical matrix:");
+  do printf("Please input the q-point to compute the frequencies:");
   while (count_words(gets(str)) < 3);
   q[0] = atof(strtok(str," \t\n\r\f"));
   q[1] = atof(strtok(NULL," \t\n\r\f"));
