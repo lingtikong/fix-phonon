@@ -105,9 +105,9 @@ Once this option is selected from the main menu, the code will ask one to input 
 
 The header lines of the "ldos`_`_k_.dat" reads:
 {{{
-# omega nu  ldos_x ldos_y ldos_z ldos
+#freq xDOS yDOS zDOS total
 }}}
-Again, clearly, the 1st column is the angular frequency, and the 2nd column is the phonon frequency, the 3-5th columns are the _x_, _y_, _z_ component of the local PDOS, and the 6th column is the total local PDOS.
+
 
 ----
 
