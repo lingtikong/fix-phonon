@@ -20,8 +20,8 @@ Assuming that you want to install clapack under /opt/clapack/3.x.y (x, y depends
   # {{{tar -xzvf clapack.tgz}}}
   # {{{cd CLAPACK-3.2.1}}}
   # {{{cp make.inc.example make.inc   }}} (make modification if necessary)
-  # {{{cd BLAS; make}}}
-  # {{{cd ..; make}}}
+  # {{{cd BLAS/SRC; make}}}
+  # {{{cd ../..; make}}}
   # {{{mkdir -p /opt/clapack/3.2.1/lib   }}}   (needs root from now on)
   # {{{cp *.a /opt/clapack/3.2.1/lib}}}
   # {{{cp -r INCLUDE /opt/clapack/3.2.1/include}}}
