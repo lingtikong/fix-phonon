@@ -49,16 +49,16 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   MPI_Comm_rank(world,&me);
   MPI_Comm_size(world,&nprocs);
   
-  if (narg < 8) error->all("Illegal fix phonon command: number of arguments < 8");
+  if (narg < 8) error->all(FLERR,"Illegal fix phonon command: number of arguments < 8");
 
   nevery = atoi(arg[3]);   // Calculate this fix every n steps!
-  if (nevery < 1) error->all("Illegal fix phonon command");
+  if (nevery < 1) error->all(FLERR,"Illegal fix phonon command");
 
   nfreq  = atoi(arg[4]);   // frequency to output result
-  if (nfreq < 1) error->all("Illegal fix phonon command");
+  if (nfreq < 1) error->all(FLERR,"Illegal fix phonon command");
 
   waitsteps = ATOBIGINT(arg[5]); // Wait this many timesteps before actually measuring
-  if (waitsteps < 0) error->all("fix phonon: waitsteps < 0 ! Please provide non-negative number!");
+  if (waitsteps < 0) error->all(FLERR,"fix phonon: waitsteps < 0 ! Please provide non-negative number!");
 
   int n = strlen(arg[6]) + 1; // map file
   mapfile = new char[n];
@@ -77,15 +77,15 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   // other command line options
   while (iarg < narg){
     if (strcmp(arg[iarg],"sysdim") == 0){
-      if (++iarg >= narg) error->all("Illegal fix phonon command: incomplete command line options.");
+      if (++iarg >= narg) error->all(FLERR,"Illegal fix phonon command: incomplete command line options.");
       sdim = atoi(arg[iarg]);
 
     } else if (strcmp(arg[iarg],"nasr") == 0){
-      if (++iarg >= narg) error->all("Illegal fix phonon command: incomplete command line options.");
+      if (++iarg >= narg) error->all(FLERR,"Illegal fix phonon command: incomplete command line options.");
       nasr = atoi(arg[iarg]);
 
     } else {
-      error->all("fix phonon: unknown option read!");
+      error->all(FLERR,"fix phonon: unknown option read!");
     }
     iarg++;
   }
@@ -97,7 +97,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
 
   // get the total number of atoms in group
   nGFatoms = static_cast<int>(group->count(igroup));
-  if (nGFatoms<1) error->all("fix phonon: no atom found for dynamical matrix evaluation!");
+  if (nGFatoms<1) error->all(FLERR,"fix phonon: no atom found for dynamical matrix evaluation!");
 
   // MPI gatherv related variables
   recvcnts = new int[nprocs];
@@ -166,7 +166,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
     if (flog == NULL) {
       char str[MAXLINE];
       sprintf(str,"fix_phonon: Can not open output file %s",logfile);
-      error->one(str);
+      error->one(FLERR,str);
     }
     for (int i=0; i<60; i++) fprintf(flog,"#"); fprintf(flog,"\n");
     fprintf(flog,"# group name of the atoms under study      : %s\n", group->names[igroup]);
@@ -271,7 +271,7 @@ void FixPhonon::init()
   // warn if more than one fix-phonon
   int count = 0;
   for (int i=0;i<modify->nfix;i++) if (strcmp(modify->fix[i]->style,"gfc") == 0) count++;
-  if (count > 1 && me == 0) error->warning("More than one fix phonon defined"); // just warn, but allowed.
+  if (count > 1 && me == 0) error->warning(FLERR,"More than one fix phonon defined"); // just warn, but allowed.
 }
 
 /* ---------------------------------------------------------------------- */
@@ -444,18 +444,18 @@ double FixPhonon::memory_usage()
 int FixPhonon::modify_param(int narg, char **arg)
 {
   if (strcmp(arg[0],"temp") == 0) {
-    if (narg < 2) error->all("Illegal fix_modify command");
+    if (narg < 2) error->all(FLERR,"Illegal fix_modify command");
     delete [] id_temp;
     int n = strlen(arg[1]) + 1;
     id_temp = new char[n];
     strcpy(id_temp,arg[1]);
 
     int icompute = modify->find_compute(id_temp);
-    if (icompute < 0) error->all("Could not find fix_modify temp ID");
+    if (icompute < 0) error->all(FLERR,"Could not find fix_modify temp ID");
     temperature = modify->compute[icompute];
 
     if (temperature->tempflag == 0)
-      error->all("Fix_modify temp ID does not compute temperature");
+      error->all(FLERR,"Fix_modify temp ID does not compute temperature");
     inv_nTemp = 1.0/group->count(temperature->igroup);
 
     return 2;
@@ -544,17 +544,17 @@ void FixPhonon::readmap()
   if (fp == NULL){
     char str[MAXLINE];
     sprintf(str,"fix phonon: cannot open input map file %s", mapfile);
-    error->all(str);
+    error->all(FLERR,str);
   }
 
   if (fgets(strtmp,MAXLINE,fp) == NULL)
-    error->all("fix phonon: Error while reading header of mapping file!");
+    error->all(FLERR,"fix phonon: Error while reading header of mapping file!");
   sscanf(strtmp,"%d %d %d %d", &nx, &ny, &nz, &nucell);
   ntotal = nx*ny*nz;
-  if (ntotal*nucell != nGFatoms) error->all("fix phonon: FFT mesh and number of atoms in group mismatch!");
+  if (ntotal*nucell != nGFatoms) error->all(FLERR,"fix phonon: FFT mesh and number of atoms in group mismatch!");
   
   if (fgets(strtmp,MAXLINE,fp) == NULL)    // second line of mapfile is comment
-    error->all("fix phonon: Error while reading comment of mapping file!");
+    error->all(FLERR,"fix phonon: Error while reading comment of mapping file!");
 
   int ix, iy, iz, iu;
   for (int i=0; i<nGFatoms; i++){
@@ -570,8 +570,8 @@ void FixPhonon::readmap()
   fclose(fp);
 
   if (tag2surf.size() != surf2tag.size() || tag2surf.size() != static_cast<std::size_t>(nGFatoms) )
-    error->all("fix phonon: the mapping is incomplete!");
-  if (info) error->all("fix phonon: Error while reading mapping file!");
+    error->all(FLERR,"fix phonon: the mapping is incomplete!");
+  if (info) error->all(FLERR,"fix phonon: Error while reading mapping file!");
   
   // check the correctness of mapping
   int *mask  = atom->mask;
@@ -582,7 +582,7 @@ void FixPhonon::readmap()
     if (mask[i] & groupbit){
       itag = tag[i];
       idx  = tag2surf[itag];
-      if (itag != surf2tag[idx]) error->one("fix phonon: the mapping info read is incorrect!");
+      if (itag != surf2tag[idx]) error->one(FLERR,"fix phonon: the mapping info read is incorrect!");
     }
   }
 
@@ -781,7 +781,7 @@ void FixPhonon::GaussJordan(int n, std::complex<double> *Mat)
               icol = k;
             }
           }else if (ipiv[k]>1){
-            error->one("FixPhonon: Singular matrix in complex GaussJordan!");
+            error->one(FLERR,"FixPhonon: Singular matrix in complex GaussJordan!");
           }
         }
       }
@@ -799,7 +799,7 @@ void FixPhonon::GaussJordan(int n, std::complex<double> *Mat)
     indxr[i] = irow;
     indxc[i] = icol;
     idr = icol*n+icol;
-    if (Mat[idr] == std::complex<double>(0.,0.)) error->one("FixPhonon: Singular matrix in complex GaussJordan!");
+    if (Mat[idr] == std::complex<double>(0.,0.)) error->one(FLERR,"FixPhonon: Singular matrix in complex GaussJordan!");
     
     pivinv = 1./ Mat[idr];
     Mat[idr] = std::complex<double>(1.,0.);
