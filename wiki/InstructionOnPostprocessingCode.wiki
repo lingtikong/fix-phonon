@@ -24,6 +24,7 @@ Assuming that you want to install clapack under /opt/clapack/3.x.y (x, y depends
   # {{{cd ../..; make}}}
   # {{{mkdir -p /opt/clapack/3.2.1/lib   }}}   (needs root from now on)
   # {{{cp *.a /opt/clapack/3.2.1/lib}}}
+  # {{{cp F2CLIBS/libf2c.a /opt/clapack/3.2.1/lib}}}
   # {{{cp -r INCLUDE /opt/clapack/3.2.1/include}}}
   # {{{cd /opt/clapack/3.2.1/lib}}}
   # {{{ln -s lapack_LINUX.a libclapack.a}}}
