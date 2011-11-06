@@ -10,7 +10,7 @@ LIB    = $(LPKLIB) $(TCLIB) $(SPGLIB)
 #
 # cLapack library needed
 LPKINC = -I/opt/clapack/3.2.1/include
-LPKLIB = -L/opt/clapack/3.2.1/lib -lclapack -lblas -lf2c -lm
+LPKLIB = -L/opt/clapack/3.2.1/lib -lclapack -lblas -lf2c #-lm
 #
 # Tricubic library needed
 TCINC = -I/opt/tricubic/1.0/include

@@ -20,12 +20,19 @@ DynMat::DynMat(int narg, char **arg)
   // get the binary file name from command line option or user input
   char str[MAXLINE];
   if (narg < 2) {
-    do printf("\nPlease input the binary file name from fix_phonon: ");
-    while (strlen(gets(str)) < 1);
+    char *ptr;
+    printf("\n");
+    while (1){
+      printf("Please input the binary file name from fix_phonon: ");
+      fgets(str,MAXLINE,stdin);
+      ptr = strtok(str, " \n\t\r\f");
+      if (ptr) break;
+    }
 
-    int n = strlen(str) + 1;
+    int n = strlen(ptr) + 1;
     binfile = new char[n];
-    strcpy(binfile, str);
+    strcpy(binfile, ptr);
+
   } else {
     int n = strlen(arg[1]) + 1;
     binfile = new char[n];
@@ -164,13 +171,20 @@ void DynMat::writeDMq(double *q)
   // only ask for file name for the first time
   // other calls will append the result to the file.
   if (dmfile == NULL){
-    char str[MAXLINE];
-    do  printf("\nPlease input the filename to output the DM at selected q: ");
-    while (strlen(gets(str)) < 1);
-    int n = strlen(str) + 1;
+    char str[MAXLINE], *ptr;
+    printf("\n");
+    while (1){
+      printf("Please input the filename to output the DM at selected q: ");
+      fgets(str,MAXLINE,stdin);
+      ptr = strtok(str, " \r\t\n\f");
+      if (ptr) break;
+    }
+
+    int n = strlen(ptr) + 1;
     dmfile = new char[n];
-    strcpy(dmfile, str);
+    strcpy(dmfile, ptr);
     fp = fopen(dmfile,"w");
+
   } else {
     fp = fopen(dmfile,"a");
   }
@@ -277,7 +291,9 @@ void DynMat::getIntMeth()
   printf("\nWhich interpolation method would you like to use?\n");
   printf("  1. Tricubic;\n  2. Trilinear;\n");
   printf("Your choice [1]: ");
-  if (strlen(gets(str)) >0) im = atoi(strtok(str," \t\n\r\f"));
+  fgets(str,MAXLINE,stdin);
+  char *ptr = strtok(str," \t\n\r\f");
+  if (ptr) im = atoi(ptr);
 
   im =2-im%2;
   interpolate->which = im;
@@ -345,7 +361,9 @@ void DynMat::EnforceASR()
 
   // ask for iterations to enforce ASR
   printf("Please input the # of iterations to enforce ASR [%d]: ", nasr);
-  if (strlen(gets(str)) > 0) nasr = atoi(strtok(str, " \n\t\r\f"));
+  fgets(str,MAXLINE,stdin);
+  char *ptr = strtok(str," \t\n\r\f");
+  if (ptr) nasr = atoi(ptr);
   if (nasr < 1){return; for (int i=0; i<60; i++) printf("="); printf("\n");}
 
   for (int iit=0; iit<nasr; iit++){
