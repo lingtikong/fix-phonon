@@ -35,6 +35,7 @@
 #include "memory.h"
 #include "modify.h"
 #include "update.h"
+#include "string.h"
 
 using namespace LAMMPS_NS;
 
