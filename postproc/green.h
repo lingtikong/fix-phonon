@@ -5,7 +5,8 @@
 
 class Green{
 public:
-  Green(int, int, int, double, double, int, double, double **, int, double **);
+  Green(const int, const int, const int, const double, const double,
+        const int, const double, double **, const int, double **);
   ~Green();
 
 private:

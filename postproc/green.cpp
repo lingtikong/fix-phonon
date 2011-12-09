@@ -36,7 +36,8 @@
 /*------------------------------------------------------------------------------
  * Constructor is used as the main driver
  *----------------------------------------------------------------------------*/
-Green::Green(int ntm, int sdim, int niter, double min, double max, int ndos, double eps, double **Hessian, int itm, double **lpdos)
+Green::Green(const int ntm, const int sdim, const int niter, const double min, const double max,
+             const int ndos, const double eps, double **Hessian, const int itm, double **lpdos)
 {
   const double tpi = 8.*atan(1.);
   natom = ntm; sysdim = sdim; nit = niter; epson = eps;
