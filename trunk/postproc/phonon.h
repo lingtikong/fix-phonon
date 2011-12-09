@@ -42,7 +42,7 @@ private:
   void vfanyq();
   void DMdisp();
 
-  void smooth(double *, int, double, double);
+  void smooth(double *, const int);
   void writeDOS();
   void writeLDOS();
   void Normalize();
