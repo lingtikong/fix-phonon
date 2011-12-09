@@ -525,32 +525,32 @@ void Phonon::smooth(double *array, int npt, double xmin, double delta)
 {
   if (npt < 1) return;
 
-  double *tmp, *table;
+  double *tmp, *table, *peso;
   tmp   = memory->create(tmp, npt, "smooth:tmp");
+  peso  = memory->create(peso, npt, "smooth:peso");
   table = memory->create(table, npt, "smooth:table");
   
   double sigma = 4.*delta, fac = 1./(sigma*sigma);
-  double em = xmin + delta*0.5;
+  double em = 0.;
   for (int i=0; i<npt; i++){
     tmp[i] = 0.;
     table[i] = exp(-em*em*fac);
     em += delta;
   }
-  em = 0.;
+
   for (int i=0; i<npt; i++){
-    double peso = 0., emp = 0.;
+    peso[i] = 0.;
     for (int j=0; j<npt; j++){
       double tij = table[abs(i-j)];
 
       tmp [i] += array[j]*tij;
-      peso += tij;
-      emp += delta;
+      peso[i] += tij;
     }
-    array[i] = tmp[i]/peso;
-    em += delta;
   }
+  for (int i=0; i<npt; i++) array[i] = tmp[i]/peso[i];
 
   memory->destroy(tmp);
+  memory->destroy(peso);
   memory->destroy(table);
 
 return;
