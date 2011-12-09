@@ -152,7 +152,7 @@ void Phonon::pdos()
   if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     char *flag = strtok(str," \t\n\r\f");
     if (strcmp(flag,"y") == 0 || strcmp(flag,"Y") == 0){
-      smooth(dos, ndos, fmin, df);
+      smooth(dos, ndos);
     }
   }
 
@@ -521,36 +521,35 @@ return;
 /* ----------------------------------------------------------------------------
  * Private method to smooth the dos
  * ---------------------------------------------------------------------------- */
-void Phonon::smooth(double *array, int npt, double xmin, double delta)
+void Phonon::smooth(double *array, const int npt)
 {
-  if (npt < 1) return;
+  if (npt < 4) return;
 
-  double *tmp, *table, *peso;
+  int nlag = npt/4;
+
+  double *tmp, *table;
   tmp   = memory->create(tmp, npt, "smooth:tmp");
-  peso  = memory->create(peso, npt, "smooth:peso");
-  table = memory->create(table, npt, "smooth:table");
+  table = memory->create(table, nlag+1, "smooth:table");
   
-  double sigma = 4.*delta, fac = 1./(sigma*sigma);
-  double em = 0.;
+  double fnorm = -1.;
+  double sigma = 4., fac = 1./(sigma*sigma);
+  for (int jj=0; jj<= nlag; jj++){
+    table[jj] = exp(-double(jj*jj)*fac);
+    fnorm += table[jj];
+  }
+  fnorm = 1./fnorm;
+
   for (int i=0; i<npt; i++){
     tmp[i] = 0.;
-    table[i] = exp(-em*em*fac);
-    em += delta;
-  }
+    for (int jj=-nlag; jj<= nlag; jj++){
+      int j = (i+jj+npt)%npt; // assume periodical data
 
-  for (int i=0; i<npt; i++){
-    peso[i] = 0.;
-    for (int j=0; j<npt; j++){
-      double tij = table[abs(i-j)];
-
-      tmp [i] += array[j]*tij;
-      peso[i] += tij;
+      tmp [i] += array[j]*table[abs(jj)];
     }
   }
-  for (int i=0; i<npt; i++) array[i] = tmp[i]/peso[i];
+  for (int i=0; i<npt; i++) array[i] = tmp[i]*fnorm;
 
   memory->destroy(tmp);
-  memory->destroy(peso);
   memory->destroy(table);
 
 return;
