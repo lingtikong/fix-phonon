@@ -38,12 +38,11 @@
 #include "string.h"
 
 using namespace LAMMPS_NS;
+using namespace FixConst;
 
 #define INVOKED_SCALAR 1
 #define INVOKED_VECTOR 2
 #define MAXLINE 256
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
 {
