@@ -7,14 +7,25 @@ The installation of fix-phonon together with LAMMPS is pretty simple, there is n
 
 = Details =
 
-  # *Download [http://lammps.sandia.gov/ LAMMPS]*;
+If you know how to use svn to check out the latest version, follow this procedure:
+----
+  # *Download [http://lammps.sandia.gov/ LAMMPS]*; and then untar it;
   # *check out fix-phonon* under _src_ of LAMMPS:
    svn checkout http://fix-phonon.googlecode.com/svn/trunk/ USER-PHONON
   # *edit Makefile* under _src_, append "user-phonon" to the variable "PACKUSER";
   # *make yes-kspace*;
   # *make yes-user-phonon*;
   # *make your-platform*; here _your-platform_ should correspond to the correct Makefile under MAKE that works for your platform.
-
+----
+Otherwise, follow this procedure:
+----
+  # *Download [http://lammps.sandia.gov/ LAMMPS]*; and then untar it;
+  # *Download* the appropriate version of [http://code.google.com/p/fix-phonon/downloads/list *Fix-Phonon*]; put it under _src/USER-PHONON_ of your untarred lammps; then untar it;
+  # *edit Makefile* under _src_, append "*user-phonon*" to the variable "PACKUSER";
+  # *make yes-kspace*;
+  # *make yes-user-phonon*;
+  # *make your-platform*; here _your-platform_ should correspond to the correct Makefile under MAKE that works for your platform.
+ ----
 Then everything should work for you. One can check the document under _USER-PHONON/doc_ as well as the examples in _USER-PHONON/Examples_ for the usage of fix-phonon.
 
 The postprocessing code locates in _USER-PHONON/postproc_, for the installation, check the README file and/or [http://code.google.com/p/fix-phonon/wiki/InstructionOnPostprocessingCode here]. 
