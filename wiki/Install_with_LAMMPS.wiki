@@ -20,7 +20,7 @@ If you know how to use svn to check out the latest version, follow this procedur
 Otherwise, follow this procedure:
 ----
   # *Download [http://lammps.sandia.gov/ LAMMPS]*; and then untar it;
-  # *Download* the appropriate version of [http://code.google.com/p/fix-phonon/downloads/list *Fix-Phonon*]; put it under _src/USER-PHONON_ of your untarred lammps; then untar it;
+  # *Download* the appropriate version of [http://code.google.com/p/fix-phonon/downloads/list Fix-Phonon]; untar it under the _src_ directory of your untarred lammps; 
   # *edit Makefile* under _src_, append "*user-phonon*" to the variable "PACKUSER";
   # *make yes-kspace*;
   # *make yes-user-phonon*;
