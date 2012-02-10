@@ -374,10 +374,11 @@ void Phonon::pdisp()
 
     int quit = 0;
     printf("\nPlease input the start q-point in unit of B1->B3, q to exit [%g %g %g]: ", qstr[0], qstr[1], qstr[2]);
-    int nr = count_words(fgets(str,MAXLINE,stdin));
-    if ((nr == 1) && (strcmp(str,"q") == 0)) break;
-    else if (nr >= 3){
-      qstr[0] = atof(strtok(str," \t\n\r\f"));
+    int n = count_words(fgets(str,MAXLINE,stdin));
+    char *ptr = strtok(str," \t\n\r\f");
+    if ((n == 1) && (strcmp(ptr,"q") == 0)) break;
+    else if (n >= 3){
+      qstr[0] = atof(ptr);
       qstr[1] = atof(strtok(NULL," \t\n\r\f"));
       qstr[2] = atof(strtok(NULL," \t\n\r\f"));
     }
@@ -485,9 +486,10 @@ void Phonon::DMdisp()
 
     printf("\nPlease input the start q-point in unit of B1->B3, q to exit [%g %g %g]: ", qstr[0], qstr[1], qstr[2]);
     int n = count_words(fgets(str,MAXLINE,stdin));
-    if ((n == 1) && (strcmp(strtok(str," \t\n\r\f"),"q") == 0)) break;
+    char *ptr = strtok(str," \t\n\r\f");
+    if ((n == 1) && (strcmp(ptr,"q") == 0)) break;
     else if (n >= 3){
-      qstr[0] = atof(strtok(str," \t\n\r\f"));
+      qstr[0] = atof(ptr);
       qstr[1] = atof(strtok(NULL," \t\n\r\f"));
       qstr[2] = atof(strtok(NULL," \t\n\r\f"));
     }
