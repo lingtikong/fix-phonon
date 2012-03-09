@@ -3,6 +3,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 #include "memory.h"
 #include "interpolate.h"
 
@@ -25,10 +26,11 @@ public:
   char *funit;
 
   void getDMq(double *);
+  void getDMq(double *, double *);
   void writeDMq(double *);
   void writeDMq(double *, const double, FILE *fp);
   int geteigen(double *, int);
-  void getIntMeth();
+  void reset_interp_method();
 
   doublecomplex **DM_q;
 
@@ -39,12 +41,11 @@ public:
 
 private:
 
+  int flag_skip, flag_reset_gamma;
   Interpolate *interpolate;
   
   Memory *memory;
   int npt, fftdim2;
-  double *egv_gamma;
-  int flag_gamma;
 
   int nasr;
   void EnforceASR();
@@ -59,5 +60,6 @@ private:
   void real2rec();
   void GaussJordan(int, double *);
 
+  void help();
 };
 #endif

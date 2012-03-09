@@ -1,9 +1,12 @@
 #include "interpolate.h"
 #include "math.h"
 
+#define MAXLINE 256
+#define MIN(a,b) ((a)>(b)?(b):(a))
+#define MAX(a,b) ((a)>(b)?(a):(b))
+
 /* ----------------------------------------------------------------------------
- * Constructor used to get input from caller, and prepare for tricubic
- * interpolations.
+ * Constructor used to get info from caller, and prepare other necessary data
  * ---------------------------------------------------------------------------- */
 Interpolate::Interpolate(int nx, int ny, int nz, int ndm, doublecomplex **DM)
 {
@@ -14,48 +17,61 @@ Interpolate::Interpolate(int nx, int ny, int nz, int ndm, doublecomplex **DM)
   ndim = ndm;
   memory = new Memory;
 
-  data = memory->create(data, Npt, ndim, "Interpolate_Interpolate:data");
-  Dfdx = memory->create(Dfdx, Npt, ndim, "Interpolate_Interpolate:Dfdx");
-  Dfdy = memory->create(Dfdy, Npt, ndim, "Interpolate_Interpolate:Dfdy");
-  Dfdz = memory->create(Dfdz, Npt, ndim, "Interpolate_Interpolate:Dfdz");
-  D2fdxdy = memory->create(D2fdxdy, Npt, ndim, "Interpolate_Interpolate:D2fdxdy");
-  D2fdxdz = memory->create(D2fdxdz, Npt, ndim, "Interpolate_Interpolate:D2fdxdz");
-  D2fdydz = memory->create(D2fdydz, Npt, ndim, "Interpolate_Interpolate:D2fdydz");
-  D3fdxdydz = memory->create(D3fdxdydz, Npt, ndim, "Interpolate_Interpolate:D2fdxdydz");
+  which = UseGamma = 0;
 
-  // copy data
-  for (int n=0; n<Npt; n++){
-    for (int idim=0; idim<ndim; idim++) data[n][idim] = DM[n][idim];
+  data = DM;
+  Dfdx = Dfdy = Dfdz = D2fdxdy = D2fdxdz = D2fdydz = D3fdxdydz = NULL;
+  flag_reset_gamma = flag_allocated_dfs = 0;
+
+return;
+}
+
+/* ----------------------------------------------------------------------------
+ * Private method to initialize tricubic interpolations
+ * ---------------------------------------------------------------------------- */
+void Interpolate::tricubic_init()
+{
+  // prepare necessary data for tricubic
+  if (flag_allocated_dfs == 0){
+    Dfdx = memory->create(Dfdx, Npt, ndim, "Interpolate_Interpolate:Dfdx");
+    Dfdy = memory->create(Dfdy, Npt, ndim, "Interpolate_Interpolate:Dfdy");
+    Dfdz = memory->create(Dfdz, Npt, ndim, "Interpolate_Interpolate:Dfdz");
+    D2fdxdy = memory->create(D2fdxdy, Npt, ndim, "Interpolate_Interpolate:D2fdxdy");
+    D2fdxdz = memory->create(D2fdxdz, Npt, ndim, "Interpolate_Interpolate:D2fdxdz");
+    D2fdydz = memory->create(D2fdydz, Npt, ndim, "Interpolate_Interpolate:D2fdydz");
+    D3fdxdydz = memory->create(D3fdxdydz, Npt, ndim, "Interpolate_Interpolate:D2fdxdydz");
+
+    flag_allocated_dfs = 1;
   }
 
   // get the derivatives
   int n=0;
   const double half = 0.5, one4 = 0.25, one8 = 0.125;
-  for (int i=0; i<Nx; i++)
-  for (int j=0; j<Ny; j++)
-  for (int k=0; k<Nz; k++){
-    //facx = facy = facz = 0.5;
-    int ip = (i+1)%Nx, jp = (j+1)%Ny, kp = (k+1)%Nz;
-    int im = (i-1+Nx)%Nx, jm = (j-1+Ny)%Ny, km = (k-1+Nz)%Nz;
+  for (int ii=0; ii<Nx; ii++)
+  for (int jj=0; jj<Ny; jj++)
+  for (int kk=0; kk<Nz; kk++){
 
-    int p100 = (ip*Ny+j)*Nz+k;
-    int p010 = (i*Ny+jp)*Nz+k;
-    int p001 = (i*Ny+j)*Nz+kp;
-    int p110 = (ip*Ny+jp)*Nz+k;
-    int p101 = (ip*Ny+j)*Nz+kp;
-    int p011 = (i*Ny+jp)*Nz+kp;
-    int pm00 = (im*Ny+j)*Nz+k;
-    int p0m0 = (i*Ny+jm)*Nz+k;
-    int p00m = (i*Ny+j)*Nz+km;
-    int pmm0 = (im*Ny+jm)*Nz+k;
-    int pm0m = (im*Ny+j)*Nz+km;
-    int p0mm = (i*Ny+jm)*Nz+km;
-    int p1m0 = (ip*Ny+jm)*Nz+k;
-    int p10m = (ip*Ny+j)*Nz+km;
-    int p01m = (i*Ny+jp)*Nz+km;
-    int pm10 = (im*Ny+jp)*Nz+k;
-    int pm01 = (im*Ny+j)*Nz+kp;
-    int p0m1 = (i*Ny+jm)*Nz+kp;
+    int ip = (ii+1)%Nx, jp = (jj+1)%Ny, kp = (kk+1)%Nz;
+    int im = (ii-1+Nx)%Nx, jm = (jj-1+Ny)%Ny, km = (kk-1+Nz)%Nz;
+
+    int p100 = (ip*Ny+jj)*Nz+kk;
+    int p010 = (ii*Ny+jp)*Nz+kk;
+    int p001 = (ii*Ny+jj)*Nz+kp;
+    int p110 = (ip*Ny+jp)*Nz+kk;
+    int p101 = (ip*Ny+jj)*Nz+kp;
+    int p011 = (ii*Ny+jp)*Nz+kp;
+    int pm00 = (im*Ny+jj)*Nz+kk;
+    int p0m0 = (ii*Ny+jm)*Nz+kk;
+    int p00m = (ii*Ny+jj)*Nz+km;
+    int pmm0 = (im*Ny+jm)*Nz+kk;
+    int pm0m = (im*Ny+jj)*Nz+km;
+    int p0mm = (ii*Ny+jm)*Nz+km;
+    int p1m0 = (ip*Ny+jm)*Nz+kk;
+    int p10m = (ip*Ny+jj)*Nz+km;
+    int p01m = (ii*Ny+jp)*Nz+km;
+    int pm10 = (im*Ny+jp)*Nz+kk;
+    int pm01 = (im*Ny+jj)*Nz+kp;
+    int p0m1 = (ii*Ny+jm)*Nz+kp;
     int p111 = (ip*Ny+jp)*Nz+kp;
     int pm11 = (im*Ny+jp)*Nz+kp;
     int p1m1 = (ip*Ny+jm)*Nz+kp;
@@ -93,7 +109,7 @@ return;
  * ---------------------------------------------------------------------------- */
 Interpolate::~Interpolate()
 {
-  memory->destroy(data);
+  data = NULL;
   memory->destroy(Dfdx);
   memory->destroy(Dfdy);
   memory->destroy(Dfdz);
@@ -117,14 +133,13 @@ void Interpolate::tricubic(double *qin, doublecomplex *DMq)
     while (q[i] >= 1.) q[i] -= 1.;
   }
   
-  int nx = Nx, ny = Ny, nz = Nz;
-  int ix = int(q[0]*double(nx));
-  int iy = int(q[1]*double(ny));
-  int iz = int(q[2]*double(nz));
-  double x = q[0]*double(nx)-double(ix);
-  double y = q[1]*double(ny)-double(iy);
-  double z = q[2]*double(nz)-double(iz);
-  int ixp = (ix+1)%nx, iyp = (iy+1)%ny, izp = (iz+1)%nz;
+  int ix = int(q[0]*double(Nx));
+  int iy = int(q[1]*double(Ny));
+  int iz = int(q[2]*double(Nz));
+  double x = q[0]*double(Nx)-double(ix);
+  double y = q[1]*double(Ny)-double(iy);
+  double z = q[2]*double(Nz)-double(iz);
+  int ixp = (ix+1)%Nx, iyp = (iy+1)%Ny, izp = (iz+1)%Nz;
   vidx[0] = (ix*Ny+iy)*Nz+iz;
   vidx[1] = (ixp*Ny+iy)*Nz+iz;
   vidx[2] = (ix*Ny+iyp)*Nz+iz;
@@ -133,6 +148,8 @@ void Interpolate::tricubic(double *qin, doublecomplex *DMq)
   vidx[5] = (ixp*Ny+iy)*Nz+izp;
   vidx[6] = (ix*Ny+iyp)*Nz+izp;
   vidx[7] = (ixp*Ny+iyp)*Nz+izp;
+  for (int i=0; i<8; i++) if (vidx[i] == 0) UseGamma = 1;
+
   for (int idim=0; idim<ndim; idim++){
     for (int i=0; i<8; i++){
       f[i] = data[vidx[i]][idim].r;
@@ -204,6 +221,8 @@ void Interpolate::trilinear(double *qin, doublecomplex *DMq)
   vindex[5] = ((ix*Ny)+iyp)*Nz + izp;
   vindex[6] = ((ixp*Ny)+iyp)*Nz + iz;
   vindex[7] = ((ixp*Ny)+iyp)*Nz + izp;
+  for (int i=0; i<8; i++) if (vindex[i] == 0) UseGamma = 1;
+
   double fac[8];
   fac[0] = (1.-x)*(1.-y)*(1.-z);
   fac[1] = x*(1.-y)*(1.-z);
@@ -232,9 +251,61 @@ return;
  * ---------------------------------------------------------------------------- */
 void Interpolate::execute(double *qin, doublecomplex *DMq)
 {
+  UseGamma = 0;
   if (which) // 1: tricubic
     tricubic(qin, DMq);
   else       // otherwise: trilinear
     trilinear(qin, DMq);
 return;
 }
+
+/* ----------------------------------------------------------------------------
+ * Public method, to set/reset the interpolation method
+ * ---------------------------------------------------------------------------- */
+void Interpolate::set_method()
+{
+  char str[MAXLINE];
+  int im = 1;
+  printf("\n");for(int i=0; i<60; i++) printf("=");
+  printf("\nWhich interpolation method would you like to use?\n");
+  printf("  1. Tricubic;\n  2. Trilinear;\n");
+  printf("Your choice [1]: ");
+  fgets(str,MAXLINE,stdin);
+  char *ptr = strtok(str," \t\n\r\f");
+  if (ptr) im = atoi(ptr);
+
+  which =2-im%2;
+  printf("Your chose: %d\n", which);
+  for(int i=0; i<60; i++) printf("="); printf("\n\n");
+
+  if (which) tricubic_init();
+
+return;
+}
+
+/* ----------------------------------------------------------------------------
+ * Public method, to reset gamma point data; in this case, the gamma point data
+ * will be meaningless. should only be called once.
+ * ---------------------------------------------------------------------------- */
+void Interpolate::reset_gamma()
+{
+  if (flag_reset_gamma) return;
+  flag_reset_gamma = 1;
+
+  int p1 = 1%Nx, p2 = 2%Nx;
+  int m1 = (Nx-1), m2 = (Nx-2+Nx)%Nx;
+
+  int ip1 = p1*Ny*Nz, ip2 = p2*Ny*Nz;
+  int im1 = m1*Ny*Nz, im2 = m2*Ny*Nz;
+
+  double const one6 = -1./6., two3 = 2./3.;
+
+  for (int idim=0; idim<ndim; idim++){
+    data[0][idim].i = 0.;
+    data[0][idim].r = (data[im2][idim].r + data[ip2][idim].r) * one6
+                    + (data[im1][idim].r + data[ip1][idim].r) * two3;
+  }
+
+return;
+}
+/* ---------------------------------------------------------------------------- */

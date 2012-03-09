@@ -68,7 +68,7 @@ Phonon::Phonon(DynMat *dm)
     else if (job == 6) therm(); 
     else if (job == 7) ldos_egv(); 
     else if (job == 8) ldos_rsgf(); 
-    else if (job == 9) dynmat->getIntMeth();
+    else if (job == 9) dynmat->reset_interp_method();
     else break;
   }
 return;
@@ -141,10 +141,13 @@ void Phonon::pdos()
 
   // now to calculate the DOS
   double offset = fmin-0.5*df;
-  for (int iq=0; iq<nq; iq++)
-  for (int j=0; j<ndim; j++){
-    int idx = int((eigs[iq][j]-offset)*rdf);
-    if (idx>=0 && idx<ndos) dos[idx] += wt[iq];
+  for (int iq=0; iq<nq; iq++){
+    if (wt[iq] > 0.){
+      for (int j=0; j<ndim; j++){
+        int idx = int((eigs[iq][j]-offset)*rdf);
+        if (idx>=0 && idx<ndos) dos[idx] += wt[iq];
+      }
+    }
   }
 
   // smooth dos ?
@@ -398,10 +401,13 @@ void Phonon::pdisp()
 
     for (int i=0; i<3; i++) q[i] = qstr[i];
     for (int ii=0; ii<nq; ii++){
-      dynmat->getDMq(q);
-      dynmat->geteigen(egvs, 0);
-      fprintf(fp,"%lg %lg %lg %lg ", q[0], q[1], q[2], qr);
-      for (int i=0; i<ndim; i++) fprintf(fp," %lg", egvs[i]);
+      double wii = 1.;
+      dynmat->getDMq(q, &wii);
+      if (wii > 0.){
+        dynmat->geteigen(egvs, 0);
+        fprintf(fp,"%lg %lg %lg %lg ", q[0], q[1], q[2], qr);
+        for (int i=0; i<ndim; i++) fprintf(fp," %lg", egvs[i]);
+      }
       fprintf(fp,"\n");
 
       for (int i=0; i<3; i++) q[i] += qinc[i];
@@ -1042,7 +1048,9 @@ void Phonon::ldos_egv()
   for (int iq=0; iq<nq; iq++){
     if ((iq+1)%nprint == 0) {printf("."); fflush(stdout);}
 
-    dynmat->getDMq(qpts[iq]);
+    dynmat->getDMq(qpts[iq], &wt[iq]);
+    if (wt[iq] <= 0.) continue;
+
     dynmat->geteigen(&egval[0], 1);
 
     for (int idim=0; idim<ndim; idim++){
@@ -1130,8 +1138,8 @@ void Phonon::ComputeAll()
   for (int iq=0; iq<nq; iq++){
     if ((iq+1)%nprint == 0) {printf("."); fflush(stdout);}
 
-    dynmat->getDMq(qpts[iq]);
-    dynmat->geteigen(eigs[iq], 0);
+    dynmat->getDMq(qpts[iq], &wt[iq]);
+    if (wt[iq] > 0.) dynmat->geteigen(eigs[iq], 0);
   }
   printf("Done!\n");
   time->stop(); time->print(); delete time;
