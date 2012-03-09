@@ -3,6 +3,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 #include "memory.h"
 #include <tricubic.h>
 extern "C"{
@@ -17,16 +18,21 @@ public:
   Interpolate(int, int, int, int, doublecomplex **);
   ~Interpolate();
 
-  int which;
-
+  void set_method();
   void execute(double *, doublecomplex *);
+  void reset_gamma();
+
+  int UseGamma;
 
 private:
+  void tricubic_init();
   void tricubic(double *, doublecomplex *);
   void trilinear(double *, doublecomplex *);
   Memory *memory;
 
+  int which;
   int Nx, Ny, Nz, Npt, ndim;
+  int flag_reset_gamma, flag_allocated_dfs;
 
   doublecomplex **data;
   doublecomplex **Dfdx, **Dfdy, **Dfdz, **D2fdxdy, **D2fdxdz, **D2fdydz, **D3fdxdydz;

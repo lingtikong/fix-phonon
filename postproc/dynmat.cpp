@@ -1,5 +1,4 @@
 #include "dynmat.h"
-#include "string.h"
 #include "math.h"
 
 #define MAXLINE 256
@@ -9,17 +8,38 @@ DynMat::DynMat(int narg, char **arg)
 {
   attyp = NULL;
   memory = NULL;
-  egv_gamma = NULL;
   M_inv_sqrt = NULL;
   interpolate = NULL;
   DM_q = DM_all = NULL;
   binfile = funit = dmfile = NULL;
 
-  flag_gamma = 0;
+  flag_reset_gamma = flag_skip = 0;
 
-  // get the binary file name from command line option or user input
+  // analyze the command line options
+  int iarg = 1;
+  while (narg > iarg){
+    if (strcmp(arg[iarg], "-s") == 0){
+      flag_reset_gamma = flag_skip = 1;
+
+    } else if (strcmp(arg[iarg], "-r") == 0){
+      flag_reset_gamma = 1;
+
+    } else if (strcmp(arg[iarg], "-h") == 0){
+      help();
+
+    } else {
+      if (binfile) delete []binfile;
+      int n = strlen(arg[iarg]) + 1;
+      binfile = new char[n];
+      strcpy(binfile, arg[iarg]); 
+    }
+
+    iarg++;
+  }
+
+  // get the binary file name from user input if not found in command line
   char str[MAXLINE];
-  if (narg < 2) {
+  if (binfile == NULL) {
     char *ptr;
     printf("\n");
     while (1){
@@ -32,18 +52,13 @@ DynMat::DynMat(int narg, char **arg)
     int n = strlen(ptr) + 1;
     binfile = new char[n];
     strcpy(binfile, ptr);
-
-  } else {
-    int n = strlen(arg[1]) + 1;
-    binfile = new char[n];
-    strcpy(binfile, arg[1]);
   }
 
   // open the binary file
   FILE *fp = fopen(binfile, "rb");
   if (fp == NULL) {
     printf("\nFile %s not found! Programe terminated.\n", binfile);
-    exit(1);
+    help();
   }
 
   // read header info from the binary file
@@ -119,6 +134,10 @@ DynMat::DynMat(int narg, char **arg)
     flag_latinfo = 0;
   }
 
+  // initialize interpolation
+  interpolate = new Interpolate(nx,ny,nz,fftdim2,DM_all);
+  if (flag_reset_gamma) interpolate->reset_gamma();
+
   if ( flag_mass_read ){ // M_inv_sqrt info read, the data stored are force constant matrix instead of dynamical matrix.
 
     EnforceASR();
@@ -138,8 +157,7 @@ DynMat::DynMat(int narg, char **arg)
   }
 
   // ask for the interpolation method
-  interpolate =  new Interpolate(nx, ny, nz, fftdim2, DM_all);
-  getIntMeth();
+  interpolate->set_method();
 
   return;
 }
@@ -157,7 +175,6 @@ DynMat::~DynMat()
  memory->destroy(attyp);
  memory->destroy(basis);
  memory->destroy(DM_all);
- memory->destroy(egv_gamma);
  memory->destroy(M_inv_sqrt);
  if (memory) delete memory;
 }
@@ -221,12 +238,6 @@ return;
  * ---------------------------------------------------------------------------- */
 int DynMat::geteigen(double *egv, int flag)
 {
-  if (flag_gamma && !flag && egv_gamma){
-    for (int idim=0; idim<fftdim; idim++) egv[idim] = egv_gamma[idim];
-
-    return 0;
-  }
-
   char jobz, uplo;
   integer n, lda, lwork, lrwork, *iwork, liwork, info;
   doublecomplex *work;
@@ -255,10 +266,6 @@ int DynMat::geteigen(double *egv, int flag)
 
     w[i] *= eml2f;
   }
-  if (flag_gamma){
-    if (egv_gamma == NULL) memory->create(egv_gamma,fftdim,"geteigen:egv_gamma");
-    for (int idim=0; idim<fftdim; idim++) egv_gamma[idim] = w[idim];
-  }
 
   memory->destroy(work);
   memory->destroy(rwork);
@@ -273,36 +280,19 @@ return info;
 void DynMat::getDMq(double *q)
 {
   interpolate->execute(q, DM_q[0]);
-
-  flag_gamma = 0;
-  if ( (q[0]*q[0]+q[1]*q[1]+q[2]*q[2]) <= 1.e-10 ) flag_gamma = 1;
-
 return;
 }
 
 /* ----------------------------------------------------------------------------
- * method to select the interpolation method.
+ * method to get the Dynamical Matrix at q
  * ---------------------------------------------------------------------------- */
-void DynMat::getIntMeth()
+void DynMat::getDMq(double *q, double *wt)
 {
-  char str[MAXLINE];
-  int im = 1;
-  printf("\n");for(int i=0; i<60; i++) printf("=");
-  printf("\nWhich interpolation method would you like to use?\n");
-  printf("  1. Tricubic;\n  2. Trilinear;\n");
-  printf("Your choice [1]: ");
-  fgets(str,MAXLINE,stdin);
-  char *ptr = strtok(str," \t\n\r\f");
-  if (ptr) im = atoi(ptr);
+  interpolate->execute(q, DM_q[0]);
 
-  im =2-im%2;
-  interpolate->which = im;
-  printf("Your chose: %d\n", im);
-  for(int i=0; i<60; i++) printf("="); printf("\n\n");
-
+  if (flag_skip && interpolate->UseGamma ) wt[0] = 0.;
 return;
 }
-
 
 /* ----------------------------------------------------------------------------
  * private method to convert the cartisan coordinate of basis into fractional
@@ -557,5 +547,41 @@ void DynMat::GaussJordan(int n, double *Mat)
   delete []indxc;
   delete []ipiv;
 return;
+}
+
+/* ----------------------------------------------------------------------------
+ * Public method to reset the interpolation method
+ * ---------------------------------------------------------------------------- */
+void DynMat::reset_interp_method()
+{
+  interpolate->set_method();
+
+return;
+}
+
+/* ----------------------------------------------------------------------------
+ * Private method to display help info
+ * ---------------------------------------------------------------------------- */
+void DynMat::help()
+{
+  printf("\nphana  :  PHonon ANAlyser for Fix-Phonon.\n\n");
+  printf("Usage:\n  phana [options]\n\n");
+  printf("Available options:\n");
+  printf("  -r          To reset the dynamical matrix at the gamma point by a 4th order\n");
+  printf("              polynomial interpolation along the [100] direction; this might be\n");
+  printf("              useful for systems with charges. As for charged system, the dynamical\n");
+  printf("              matrix at Gamma is far from accurate because of the long range nature\n");
+  printf("              of Coulombic interaction. By reset it by interpolation, will partially\n");
+  printf("              elliminate the unwanted behavior, but the result is still inaccurate.\n");
+  printf("              By default, this is not set; and not expected for uncharged systems.\n\n");
+  printf("  -s          This will reset the dynamical matrix at the gamma point, too, but it\n");
+  printf("              will also inform the code to skip all q-points that is in the vicinity\n");
+  printf("              of the gamma point when evaluating phonon DOS and/or phonon dispersion.\n\n");
+  printf("              By default, this is not set; and not expected for uncharged systems.\n\n");
+  printf("  -h          To print out this help info.\n\n");
+  printf("  file        To define the filename that carries the binary dynamical matrice generated\n");
+  printf("              by fix-phonon. If not provided, the code will ask for it.\n");
+  printf("\n\n");
+  exit(0);
 }
 /* --------------------------------------------------------------------*/
