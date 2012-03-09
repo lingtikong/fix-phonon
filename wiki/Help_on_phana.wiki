@@ -9,15 +9,29 @@ The post-processing code, _phana_, is driven by menu, one can follow the menu st
 
 The post-processing code _phana_ can be invoked by
 {{{
-phana binary-file-name
+phana [options] binary-file-name
 }}}
 where _binary-file-name_ is the binary file produced by fix-phonon, which carries the measured dynamical matrice; usually one will get several/many these binary files, and the last one is in general preferred, as the information it carries is averaged over a longer time interval than the others.
 
 Alternatively, one can also invoke _phana_ simply by
 {{{
-phana
+phana [options]
 }}}
 then the code will ask for the binary file name.
+
+The options available are:
+{{{
+  -r
+
+  -s
+
+  -h
+}}}
+The options _-r_ and _-s_ are designed to remedy partially the problems encountered with charged systems. Since in the calculations, periodic boundary conditions are always assumed, and the repeating cell (_supercell_) is expected to be large enough so that the elements of the dynamical matrix fall off to negligible values at the boundary of the supercell. For charged systems, however, this is difficult to be achieved. Especially at the Gamma point, the displacements of charges create dipoles that interact with long range forces, and therefore the force constant elements fall off only as _r^3_. These dipoles also produce a macroscopic electric field which slows the convergence of the force constant element. As a result, the dynamical matrix at Gamma measured by Fix-Phonon is generally ill-behaved. One can reduce this by using a large enough supercell, but if you do not want a really accurate evaluation of them around the Gamma point, you can use one of these two options to remedy it partially.
+
+By setting _-r_, the dynamical matrix at Gamma will be reset by employing a 4th order polynomial interpolation along the [100] direction of the reciprocal space. While by setting _-s_, the q-points around the Gamma point will also be skipped when evaluating the phonon DOS or phonon dispersion. It should be able to make the curves look better than without setting them; but please keep in mind that this cannot remedy the problem completely.
+
+The option _-h_ is simply used to print out a help information of _phana_.
 
 After reading the binary file, _phana_ will display some info read from the file, and then computes the eigenvalues of the _force constant matrix_ at the Gamma point; usually one will expected some (3 for 3D case) _zero_ frequencies, which correspond to the acoustic modes, however, due to finite size effect, this is not strictly followed. We need therefore to apply the acoustic sum rule (ASR) "manually". The code will ask for the desired number of iterations to apply ASR. After that the code will compute the eigenvalues of the modified _force constant matrix_ at Gamma, to show how good the enforcement of ASR.
 
