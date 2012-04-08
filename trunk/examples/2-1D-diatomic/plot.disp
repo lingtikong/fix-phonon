@@ -17,7 +17,7 @@ set key top left
 set xtics ("-{/Symbol p}/2a" -0.5, "{/Symbol G}" 0.0, "{/Symbol p}/2a" 0.5)
 set samples 101
 
-set arrow 1 from 0,0 to 0,2 nohead lt 9
+set grid xtics lt 9
 
 plot omp(x)     w l lt 1 lc 3 t 'Theory',\
      omm(x)     w l lt 1 lc 3 t '',\

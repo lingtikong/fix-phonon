@@ -212,16 +212,15 @@ void Interpolate::trilinear(double *qin, doublecomplex *DMq)
   z = q[2] - double(iz);
 
 //--------------------------------------
-  int vindex[8];
-  vindex[0] = ((ix*Ny)+iy)*Nz + iz;
-  vindex[1] = ((ixp*Ny)+iy)*Nz + iz;
-  vindex[2] = ((ix*Ny)+iyp)*Nz + iz;
-  vindex[3] = ((ix*Ny)+iy)*Nz + izp;
-  vindex[4] = ((ixp*Ny)+iy)*Nz + izp;
-  vindex[5] = ((ix*Ny)+iyp)*Nz + izp;
-  vindex[6] = ((ixp*Ny)+iyp)*Nz + iz;
-  vindex[7] = ((ixp*Ny)+iyp)*Nz + izp;
-  for (int i=0; i<8; i++) if (vindex[i] == 0) UseGamma = 1;
+  vidx[0] = ((ix*Ny)+iy)*Nz + iz;
+  vidx[1] = ((ixp*Ny)+iy)*Nz + iz;
+  vidx[2] = ((ix*Ny)+iyp)*Nz + iz;
+  vidx[3] = ((ix*Ny)+iy)*Nz + izp;
+  vidx[4] = ((ixp*Ny)+iy)*Nz + izp;
+  vidx[5] = ((ix*Ny)+iyp)*Nz + izp;
+  vidx[6] = ((ixp*Ny)+iyp)*Nz + iz;
+  vidx[7] = ((ixp*Ny)+iyp)*Nz + izp;
+  for (int i=0; i<8; i++) if (vidx[i] == 0) UseGamma = 1;
 
   double fac[8];
   fac[0] = (1.-x)*(1.-y)*(1.-z);
@@ -238,8 +237,8 @@ void Interpolate::trilinear(double *qin, doublecomplex *DMq)
     DMq[idim].r = 0.;
     DMq[idim].i = 0.;
     for (int i=0; i<8; i++){
-      DMq[idim].r += data[vindex[i]][idim].r*fac[i];
-      DMq[idim].i += data[vindex[i]][idim].i*fac[i];
+      DMq[idim].r += data[vidx[i]][idim].r*fac[i];
+      DMq[idim].i += data[vidx[i]][idim].i*fac[i];
     }
   }
 
@@ -252,7 +251,7 @@ return;
 void Interpolate::execute(double *qin, doublecomplex *DMq)
 {
   UseGamma = 0;
-  if (which) // 1: tricubic
+  if (which == 1) // 1: tricubic
     tricubic(qin, DMq);
   else       // otherwise: trilinear
     trilinear(qin, DMq);
@@ -278,7 +277,7 @@ void Interpolate::set_method()
   printf("Your chose: %d\n", which);
   for(int i=0; i<60; i++) printf("="); printf("\n\n");
 
-  if (which) tricubic_init();
+  if (which == 1) tricubic_init();
 
 return;
 }
