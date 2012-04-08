@@ -23,4 +23,4 @@ NOTE: This package won't work if LAMMPS is compiled as serial version
       If fftw is used, please use the double precision version.
 
 Author: Ling-Ti Kong, konglt@sjtu.edu.cn
-version: 1.58 / Feb 2012
+version: 1.66 / Feb 2012

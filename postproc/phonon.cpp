@@ -934,9 +934,11 @@ void Phonon::QMesh()
 
     //spg_show_symmetry(latvec, pos, attyp,  num_atom, symprec);
 
-    nq = spg_get_ir_reciprocal_mesh(grid_point, map, num_grid, mesh, shift,  // use this line and comment out the following one, if spglib v 0.7.1 is used
-    //nq = spg_get_ir_reciprocal_mesh(grid_point, map, mesh, shift,  // replace the previous line with this one, if spglib 1.0.3 is used
-                               is_time_reversal, latvec, pos, attyp, num_atom, symprec);
+    // if spglib 0.7.1 is used
+    nq = spg_get_ir_reciprocal_mesh(grid_point, map, num_grid, mesh, shift, is_time_reversal, latvec, pos, attyp, num_atom, symprec);
+
+    // if spglib 1.0.3 is used
+    //nq = spg_get_ir_reciprocal_mesh(grid_point, map, mesh, shift, is_time_reversal, latvec, pos, attyp, num_atom, symprec);
 
     wt   = memory->create(wt,   nq, "QMesh:wt");
     qpts = memory->create(qpts, nq,3,"QMesh:qpts");
