@@ -1,6 +1,6 @@
 .SUFFIXES : .o .cpp
 # compiler and flags
-CC     = g++
+CC     = g++ -Wno-unused-result
 LINK   = $(CC) -static
 CFLAGS = -O3 $(DEBUG) $(UFLAG)
 #
@@ -21,6 +21,11 @@ TCLIB = -L/opt/tricubic/1.0/lib -ltricubic
 UFLAG  = -DUseSPG
 SPGINC = -I/opt/spglib/0.7.1/include
 SPGLIB = -L/opt/spglib/0.7.1/lib -lsymspg
+# if spglib > 0.7.1 is used, please 
+# 1) modify file phonon.cpp, instruction can be found by searching 0.7.1
+# 2) uncomment the following two lines
+#SPGINC = -I/opt/spglib/1.1.2/include
+#SPGLIB = -L/opt/spglib/1.1.2/lib -lsymspg
 
 # Debug flags
 #DEBUG = -g -DDEBUG

@@ -1,3 +1,4 @@
+#include <vector>
 #include "string.h"
 #include "phonon.h"
 #include "green.h"
@@ -183,7 +184,7 @@ void Phonon::writeDOS()
 
   printf("The total phonon DOS will be written to file: %s\n", fname);
 
-  FILE *fp = fopen(fname, "w"); fname = NULL;
+  FILE *fp = fopen(fname, "w");
   fprintf(fp,"# frequency  DOS\n");
   fprintf(fp,"#%s  number\n", dynmat->funit);
   double freq = fmin;
@@ -193,6 +194,17 @@ void Phonon::writeDOS()
   }
   fclose(fp);
 
+  // also write the gnuplot script to generate the figure
+  fp = fopen("pdos.gnuplot", "w");
+  fprintf(fp,"set term post enha colo 20\nset out %cpdos.eps%c\n\n",char(34),char(34));
+  fprintf(fp,"set xlabel %cfrequency (THz)%c\n",char(34),char(34));
+  fprintf(fp,"set ylabel %cPhonon DOS%c\n",char(34),char(34));
+  fprintf(fp,"unset key\n");
+  fprintf(fp,"plot %c%s%c u 1:2 w l\n",char(34),fname,char(34));
+  fclose(fp);
+
+  fname = NULL;
+  
 return;
 }
 
@@ -360,11 +372,16 @@ void Phonon::pdisp()
   char str[MAXLINE];
   printf("Please input the filename to output the dispersion data [pdisp.dat]:");
   if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "pdisp.dat");
-  char *fname = strtok(str," \t\n\r\f");
+  char *ptr = strtok(str," \t\n\r\f");
+  char *fname = new char[strlen(ptr)+1];
+  strcpy(fname,ptr);
 
-  FILE *fp = fopen(fname, "w"); fname = NULL;
+  FILE *fp = fopen(fname, "w");
   fprintf(fp,"# q     qr    freq\n");
   fprintf(fp,"# 2pi/L  2pi/L %s\n", dynmat->funit);
+
+  // to store the nodes of the dispersion curve
+  std::vector<double> nodes; nodes.clear();
 
   // now the calculate the dispersion curve
   double qstr[3], qend[3], q[3], qinc[3], qr=0., dq;
@@ -378,7 +395,7 @@ void Phonon::pdisp()
     int quit = 0;
     printf("\nPlease input the start q-point in unit of B1->B3, q to exit [%g %g %g]: ", qstr[0], qstr[1], qstr[2]);
     int n = count_words(fgets(str,MAXLINE,stdin));
-    char *ptr = strtok(str," \t\n\r\f");
+    ptr = strtok(str," \t\n\r\f");
     if ((n == 1) && (strcmp(ptr,"q") == 0)) break;
     else if (n >= 3){
       qstr[0] = atof(ptr);
@@ -399,6 +416,7 @@ void Phonon::pdisp()
     for (int i=0; i<3; i++) qinc[i] = (qend[i]-qstr[i])/double(nq-1);
     dq = sqrt(qinc[0]*qinc[0]+qinc[1]*qinc[1]+qinc[2]*qinc[2]);
 
+    nodes.push_back(qr);
     for (int i=0; i<3; i++) q[i] = qstr[i];
     for (int ii=0; ii<nq; ii++){
       double wii = 1.;
@@ -415,8 +433,30 @@ void Phonon::pdisp()
     }
     qr -= dq;
   }
+  if (qr > 0.) nodes.push_back(qr);
   fclose(fp);
   delete []egvs;
+
+  // write the gnuplot script which helps to visualize the result
+  int nnd = nodes.size();
+  if (nnd > 1){
+    fp = fopen("pdisp.gnuplot", "w");
+    fprintf(fp,"set term post enha colo 20\nset out %cpdisp.eps%c\n\n",char(34),char(34));
+    fprintf(fp,"set xlabel %cq%c\n",char(34),char(34));
+    fprintf(fp,"set ylabel %cfrequency (THz)%c\n\n",char(34),char(34));
+    fprintf(fp,"set xrange [0:%lg]\nset yrange [0:*]\n\n", nodes[nnd-1]);
+    fprintf(fp,"set grid xtics\nset xtics (");
+    fprintf(fp,"# {/Symbol G} will give you letter gamma in the label\n");
+    for (int i=0; i<nnd-1; i++) fprintf(fp,"%c%c %lg, ", char(34),char(34),nodes[i]);
+    fprintf(fp,"%c%c %lg)\n\n",char(34),char(34),nodes[nnd-1]);
+    fprintf(fp,"unset key\n\n");
+    fprintf(fp,"plot %c%s%c u 4:5 w l lt 1",char(34),fname,char(34));
+    for (int i=1; i<ndim; i++) fprintf(fp,",\\\n%c%c u 4:%d w l lt 1",char(34),char(34),i+5);
+    fclose(fp);
+  }
+
+  delete []fname;
+  nodes.clear();
 
 return;
 }
@@ -922,7 +962,7 @@ void Phonon::QMesh()
   } // end of if (method == 2 && ...
 
   if (method == 2){
-    int mesh[3], shift[3], is_time_reversal = 1;
+    int mesh[3], shift[3], is_time_reversal = 0;
     mesh[0] = nx; mesh[1] = ny; mesh[2] = nz;
     shift[0] = shift[1] = shift[2] = 0;
     int num_grid = mesh[0]*mesh[1]*mesh[2];
@@ -937,7 +977,7 @@ void Phonon::QMesh()
     // if spglib 0.7.1 is used
     nq = spg_get_ir_reciprocal_mesh(grid_point, map, num_grid, mesh, shift, is_time_reversal, latvec, pos, attyp, num_atom, symprec);
 
-    // if spglib 1.0.3 is used
+    // if spglib >= 1.0.3 is used
     //nq = spg_get_ir_reciprocal_mesh(grid_point, map, mesh, shift, is_time_reversal, latvec, pos, attyp, num_atom, symprec);
 
     wt   = memory->create(wt,   nq, "QMesh:wt");
