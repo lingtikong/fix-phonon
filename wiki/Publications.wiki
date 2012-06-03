@@ -1,0 +1,7 @@
+=Publications citing FixPhonon=
+
+  # Pei QX _et al_., _Carbon isotope doping induced interfacial thermal resistance and thermal rectification in graphene_,  [http://dx.doi.org/10.1063/1.3692173 Applied Physics Letters 100(10):101901, 2012.]
+  # Kong LT _et al_., _Dynamical stability of iron under high-temperature and high-pressure conditions_, [http://dx.doi.org/10.1209/0295-5075/97/56004 EPL 97(5):56004, 2012.]
+  # English TS _et al._, _Enhancing and tuning phonon transport at vibrationally mismatched solid-solid interfaces_, [http://dx.doi.org/10.1103/PhysRevB.85.035438 Phys Rev B 85(3):035438, 2012.]
+  # Kong Y _et al._, _Al-Pd interatomic potential and its application to nanoscale multilayer thin films_, [http://dx.doi.org/10.1016/j.msea.2011.09.041 Materials Science and Engineering A 530(1):73-86, 2011.]
+  # Pei QX _et al._, _A theoretical analysis of the thermal conductivity of hydrogenated graphene_, [http://dx.doi.org/10.1016/j.carbon.2011.06.083 Carbon 49(14):4752-4759, 2011.]
