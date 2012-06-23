@@ -41,6 +41,7 @@ private:
   void dmanyq();
   void vfanyq();
   void DMdisp();
+  void vecanyq();
 
   void smooth(double *, const int);
   void writeDOS();

@@ -51,7 +51,8 @@ Phonon::Phonon(DynMat *dm)
     printf("  6. Vibrational thermodynamical properties;\n");
     printf("  7. Local phonon DOS from eigenvectors;\n");
     printf("  8. Local phonon DOS by RSGF method;\n");
-    printf("  9. Reset the interpolation method;\n");
+    printf("  9. Freqs and eigenvectors at arbitrary q;\n");
+    printf(" -1. Reset the interpolation method;\n");
     printf("  0. Exit.\n");
     // read user choice
     int job = 0;
@@ -69,7 +70,8 @@ Phonon::Phonon(DynMat *dm)
     else if (job == 6) therm(); 
     else if (job == 7) ldos_egv(); 
     else if (job == 8) ldos_rsgf(); 
-    else if (job == 9) dynmat->reset_interp_method();
+    else if (job == 9) vecanyq(); 
+    else if (job ==-1) dynmat->reset_interp_method();
     else break;
   }
 return;
@@ -445,8 +447,8 @@ void Phonon::pdisp()
     fprintf(fp,"set xlabel %cq%c\n",char(34),char(34));
     fprintf(fp,"set ylabel %cfrequency (THz)%c\n\n",char(34),char(34));
     fprintf(fp,"set xrange [0:%lg]\nset yrange [0:*]\n\n", nodes[nnd-1]);
-    fprintf(fp,"set grid xtics\nset xtics (");
-    fprintf(fp,"# {/Symbol G} will give you letter gamma in the label\n");
+    fprintf(fp,"set grid xtics\n");
+    fprintf(fp,"# {/Symbol G} will give you letter gamma in the label\nset xtics (");
     for (int i=0; i<nnd-1; i++) fprintf(fp,"%c%c %lg, ", char(34),char(34),nodes[i]);
     fprintf(fp,"%c%c %lg)\n\n",char(34),char(34),nodes[nnd-1]);
     fprintf(fp,"unset key\n\n");
@@ -492,7 +494,7 @@ void Phonon::vfanyq()
     printf("Please input the q-point to compute the frequencies, q to exit: ");
     if (count_words(fgets(str,MAXLINE,stdin)) < 3) break;
 
-    q[0] = atof(strtok(str," \t\n\r\f"));
+    q[0] = atof(strtok(str, " \t\n\r\f"));
     q[1] = atof(strtok(NULL," \t\n\r\f"));
     q[2] = atof(strtok(NULL," \t\n\r\f"));
   
@@ -503,6 +505,48 @@ void Phonon::vfanyq()
     for (int i=0; i<ndim; i++) printf("%lg ", egvs[i]); printf("\n\n");
   }
 
+return;
+}
+
+/* ----------------------------------------------------------------------------
+ * Private method to get the vibrational frequencies and eigenvectors at selected q
+ * ---------------------------------------------------------------------------- */
+void Phonon::vecanyq()
+{
+  char str[MAXLINE];
+  double q[3], egvs[ndim];
+  doublecomplex **eigvec = dynmat->DM_q;
+  printf("Please input the filename to output the result [eigvec.dat]: ");
+  if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str,"eigvec.dat");
+  FILE *fp = fopen(strtok(str," \t\n\r\f"), "w");
+
+  while (1){
+    printf("Please input the q-point to compute the frequencies, q to exit: ");
+    if (count_words(fgets(str,MAXLINE,stdin)) < 3) break;
+
+    q[0] = atof(strtok(str, " \t\n\r\f"));
+    q[1] = atof(strtok(NULL," \t\n\r\f"));
+    q[2] = atof(strtok(NULL," \t\n\r\f"));
+  
+    dynmat->getDMq(q);
+    dynmat->geteigen(egvs, 1);
+    fprintf(fp,"# q-point: [%lg %lg %lg], sysdim: %d, # of atoms per cell: %d\n",
+      q[0],q[1],q[2], sysdim, dynmat->nucell);
+    for (int i=0; i<ndim; i++){
+      fprintf(fp,"# frequency %d at [%lg %lg %lg]: %lg\n",i+1,q[0],q[1],q[2],egvs[i]);
+      fprintf(fp,"# atom eigenvector\n");
+      for (int j=0; j<dynmat->nucell; j++){
+        int ipos = j * sysdim;
+        fprintf(fp,"%d", j+1);
+        for (int idim=0; idim<sysdim; idim++) fprintf(fp,"  %lg %lg", eigvec[i][ipos+idim].r, eigvec[i][ipos+idim].i);
+        fprintf(fp,"\n");
+      }
+      fprintf(fp,"\n");
+    }
+    fprintf(fp,"\n");
+  }
+  fclose(fp);
+  eigvec = NULL;
 return;
 }
 
