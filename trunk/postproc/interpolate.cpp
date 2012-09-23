@@ -268,13 +268,13 @@ void Interpolate::set_method()
   printf("\n");for(int i=0; i<60; i++) printf("=");
   printf("\nWhich interpolation method would you like to use?\n");
   printf("  1. Tricubic;\n  2. Trilinear;\n");
-  printf("Your choice [1]: ");
+  printf("Your choice[1]: ");
   fgets(str,MAXLINE,stdin);
   char *ptr = strtok(str," \t\n\r\f");
   if (ptr) im = atoi(ptr);
 
   which =2-im%2;
-  printf("Your chose: %d\n", which);
+  printf("Your selection: %d\n", which);
   for(int i=0; i<60; i++) printf("="); printf("\n\n");
 
   if (which == 1) tricubic_init();
