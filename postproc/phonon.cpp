@@ -56,9 +56,9 @@ Phonon::Phonon(DynMat *dm)
     printf("  0. Exit.\n");
     // read user choice
     int job = 0;
-    printf("Your choice [0]: ");
+    printf("Your choice[0]: ");
     if (count_words(fgets(str,MAXLINE,stdin)) > 0) job = atoi(strtok(str," \t\n\r\f"));
-    printf("\nYou chose: %d\n", job);
+    printf("\nYour selection: %d\n", job);
     for (int i=0; i<60;i++) printf("=");printf("\n\n");
 
     // now to do the job according to user's choice
@@ -285,9 +285,10 @@ void Phonon::ldos_rsgf()
       istr = iend = ik;
       iinc = 1;
     } else if (nr == 1) {
-      if (strcmp(str,"q") == 0) break;
+      char *ptr = strtok(str," \t\n\r\f");
+      if (strcmp(ptr,"q") == 0) break;
 
-      ik = atoi(strtok(str," \t\n\r\f"));
+      ik = atoi(ptr);
       if (ik < 0 || ik >= dynmat->nucell) break;
       istr = iend = ik;
       iinc = 1;
@@ -534,12 +535,16 @@ void Phonon::vecanyq()
       q[0],q[1],q[2], sysdim, dynmat->nucell);
     for (int i=0; i<ndim; i++){
       fprintf(fp,"# frequency %d at [%lg %lg %lg]: %lg\n",i+1,q[0],q[1],q[2],egvs[i]);
-      fprintf(fp,"# atom eigenvector\n");
+      fprintf(fp,"# atom eigenvector : |e|\n");
       for (int j=0; j<dynmat->nucell; j++){
         int ipos = j * sysdim;
+        double sum = 0.;
         fprintf(fp,"%d", j+1);
-        for (int idim=0; idim<sysdim; idim++) fprintf(fp,"  %lg %lg", eigvec[i][ipos+idim].r, eigvec[i][ipos+idim].i);
-        fprintf(fp,"\n");
+        for (int idim=0; idim<sysdim; idim++){
+          fprintf(fp,"  %lg %lg", eigvec[i][ipos+idim].r, eigvec[i][ipos+idim].i);
+          sum += eigvec[i][ipos+idim].r * eigvec[i][ipos+idim].r + eigvec[i][ipos+idim].i * eigvec[i][ipos+idim].i;
+        }
+        fprintf(fp,"  : %lg\n", sqrt(sum));
       }
       fprintf(fp,"\n");
     }
@@ -850,9 +855,10 @@ void Phonon::QMesh()
   // ask method to generate q-points
   int method = 2;
   printf("Please select your method to generate the q-points:\n");
-  printf("  1. uniform;\n  2. Monkhost-Pack mesh;\nYour choice [2]: ");
+  printf("  1. uniform;\n  2. Monkhost-Pack mesh;\nYour choice[2]: ");
   if (count_words(fgets(str,MAXLINE,stdin)) > 0) method = atoi(strtok(str," \t\n\r\f"));
   method = 2-method%2;
+  printf("Your selection: %d\n", method);
 #endif
  
   memory->destroy(wt);
