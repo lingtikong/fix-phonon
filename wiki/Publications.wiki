@@ -5,3 +5,4 @@
   # English TS _et al._, _Enhancing and tuning phonon transport at vibrationally mismatched solid-solid interfaces_, [http://dx.doi.org/10.1103/PhysRevB.85.035438 Phys Rev B 85(3):035438, 2012.]
   # Kong Y _et al._, _Al-Pd interatomic potential and its application to nanoscale multilayer thin films_, [http://dx.doi.org/10.1016/j.msea.2011.09.041 Materials Science and Engineering A 530(1):73-86, 2011.]
   # Pei QX _et al._, _A theoretical analysis of the thermal conductivity of hydrogenated graphene_, [http://dx.doi.org/10.1016/j.carbon.2011.06.083 Carbon 49(14):4752-4759, 2011.]
+  # Liu B _et al._, _Morphology and in-plane thermal conductivity of hybrid graphene sheets_, [http://dx.doi.org/10.1063/1.4767388 Applied Physics Letters 101(21):211909, 2012.]
