@@ -1,5 +1,6 @@
 #include "dynmat.h"
 #include "math.h"
+#include "version.h"
 
 #define MAXLINE 256
 
@@ -37,17 +38,17 @@ DynMat::DynMat(int narg, char **arg)
     iarg++;
   }
 
+  ShowVersion();
   // get the binary file name from user input if not found in command line
   char str[MAXLINE];
   if (binfile == NULL) {
-    char *ptr;
+    char *ptr = NULL;
     printf("\n");
-    while (1){
+    do {
       printf("Please input the binary file name from fix_phonon: ");
       fgets(str,MAXLINE,stdin);
       ptr = strtok(str, " \n\t\r\f");
-      if (ptr) break;
-    }
+    } while (ptr == NULL);
 
     int n = strlen(ptr) + 1;
     binfile = new char[n];
@@ -564,8 +565,8 @@ return;
  * ---------------------------------------------------------------------------- */
 void DynMat::help()
 {
-  printf("\nphana  :  PHonon ANAlyser for Fix-Phonon.\n\n");
-  printf("Usage:\n  phana [options]\n\n");
+  ShowVersion();
+  printf("\nUsage:\n  phana [options]\n\n");
   printf("Available options:\n");
   printf("  -r          To reset the dynamical matrix at the gamma point by a 4th order\n");
   printf("              polynomial interpolation along the [100] direction; this might be\n");
@@ -583,5 +584,19 @@ void DynMat::help()
   printf("              by fix-phonon. If not provided, the code will ask for it.\n");
   printf("\n\n");
   exit(0);
+}
+
+/* ----------------------------------------------------------------------------
+ * Private method to display the version info
+ * ---------------------------------------------------------------------------- */
+void DynMat::ShowVersion()
+{
+  printf("                ____  _   _    __    _  _    __   \n");
+  printf("               (  _ \\( )_( )  /__\\  ( \\( )  /__\\  \n");
+  printf("                )___/ ) _ (  /(__)\\  )  (  /(__)\\ \n");
+  printf("               (__)  (_) (_)(__)(__)(_)\\_)(__)(__)\n");
+  printf("\nPhonon Analyzer for Fix-Phonon, version 1.%d, compiled on %s.\n", VERSION, __DATE__);
+
+return;
 }
 /* --------------------------------------------------------------------*/

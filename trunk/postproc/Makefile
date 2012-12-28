@@ -50,6 +50,10 @@ clean:
 tar:
 	rm -f ${ROOT}.tar; tar -czvf ${ROOT}.tar.gz *.cpp  *.h Makefile README
 
+ver:
+	@echo "#define VERSION `svn info|grep '^Revision'|cut -d: -f2`" > version.h
+
+#====================================================================
 .f.o:
 	$(FC) $(FFLAGS) $(FREE) $(MPI) ${INC} -c $<
 .f90.o:
