@@ -61,5 +61,6 @@ private:
   void GaussJordan(int, double *);
 
   void help();
+  void ShowVersion();
 };
 #endif
