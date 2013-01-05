@@ -6,3 +6,4 @@
   # Kong Y _et al._, _Al-Pd interatomic potential and its application to nanoscale multilayer thin films_, [http://dx.doi.org/10.1016/j.msea.2011.09.041 Materials Science and Engineering A 530(1):73-86, 2011.]
   # Pei QX _et al._, _A theoretical analysis of the thermal conductivity of hydrogenated graphene_, [http://dx.doi.org/10.1016/j.carbon.2011.06.083 Carbon 49(14):4752-4759, 2011.]
   # Liu B _et al._, _Morphology and in-plane thermal conductivity of hybrid graphene sheets_, [http://dx.doi.org/10.1063/1.4767388 Applied Physics Letters 101(21):211909, 2012.]
+  # Eugene H. Cook _et al._, _Mechanism of friction in rotating carbon nanotube bearings_, [http://dx.doi.org/10.1016/j.jmps.2012.08.004 Journal of the Mechanics and Physics of Solids 61(2):652-673, 2013.]
