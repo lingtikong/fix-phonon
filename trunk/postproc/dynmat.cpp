@@ -74,13 +74,13 @@ DynMat::DynMat(int narg, char **arg)
   npt = nx*ny*nz;
 
   // display info related to the read file
-  printf("\n"); for (int i=0; i<60; i++) printf("="); printf("\n");
+  printf("\n"); for (int i=0; i<80; i++) printf("="); printf("\n");
   printf("Dynamical matrix is read from file: %s\n", binfile);
   printf("The system size in three dimension: %d x %d x %d\n", nx, ny, nz);
   printf("Number of atoms per unit cell     : %d\n", nucell);
   printf("System dimension                  : %d\n", sysdim);
   printf("Boltzmann constant in used units  : %g\n", boltz);
-  for (int i=0; i<60; i++) printf("="); printf("\n");
+  for (int i=0; i<80; i++) printf("="); printf("\n");
   if (sysdim<1||sysdim>3||nx<1||ny<1||nz<1||nucell<1){
     printf("Wrong values read from header of file: %s, please check the binary file!\n", binfile);
     fclose(fp); exit(3);
@@ -330,7 +330,7 @@ void DynMat::EnforceASR()
   char str[MAXLINE];
   int nasr = 20;
   if (nucell <= 1) nasr = 1;
-  printf("\n"); for (int i=0; i<60; i++) printf("=");
+  printf("\n"); for (int i=0; i<80; i++) printf("=");
 
   // compute and display eigenvalues of Phi at gamma before ASR
   if (nucell > 100){
@@ -355,7 +355,7 @@ void DynMat::EnforceASR()
   fgets(str,MAXLINE,stdin);
   char *ptr = strtok(str," \t\n\r\f");
   if (ptr) nasr = atoi(ptr);
-  if (nasr < 1){return; for (int i=0; i<60; i++) printf("="); printf("\n");}
+  if (nasr < 1){return; for (int i=0; i<80; i++) printf("="); printf("\n");}
 
   for (int iit=0; iit<nasr; iit++){
     // simple ASR; the resultant matrix might not be symmetric
@@ -418,7 +418,7 @@ void DynMat::EnforceASR()
     if (i%10 == 9) printf("\n");
     if (i == 99){ printf("...... (%d more skiped)", fftdim-100); break;}
   }
-  printf("\n"); for (int i=0; i<60; i++) printf("="); printf("\n\n");
+  printf("\n"); for (int i=0; i<80; i++) printf("="); printf("\n\n");
 
 return;
 }
@@ -446,7 +446,7 @@ void DynMat::real2rec()
 
   for (int i=0; i<9; i++) ibasevec[i] *= vol;
 
-  printf("\n"); for (int i=0; i<60; i++) printf("=");
+  printf("\n"); for (int i=0; i<80; i++) printf("=");
   printf("\nBasis vectors of the unit cell in real space:");
   for (int i=0; i<sysdim; i++){
     printf("\n     A%d: ", i+1);
@@ -457,7 +457,7 @@ void DynMat::real2rec()
     printf("\n     B%d: ", i+1);
     for (int j=0; j<sysdim; j++) printf("%8.4f ", ibasevec[i*3+j]);
   }
-  printf("\n"); for (int i=0; i<60; i++) printf("="); printf("\n");
+  printf("\n"); for (int i=0; i<80; i++) printf("="); printf("\n");
 
 return;
 }
@@ -566,7 +566,7 @@ return;
 void DynMat::help()
 {
   ShowVersion();
-  printf("\nUsage:\n  phana [options]\n\n");
+  printf("\nUsage:\n  phana [options] [file]\n\n");
   printf("Available options:\n");
   printf("  -r          To reset the dynamical matrix at the gamma point by a 4th order\n");
   printf("              polynomial interpolation along the [100] direction; this might be\n");
@@ -595,7 +595,7 @@ void DynMat::ShowVersion()
   printf("               (  _ \\( )_( )  /__\\  ( \\( )  /__\\  \n");
   printf("                )___/ ) _ (  /(__)\\  )  (  /(__)\\ \n");
   printf("               (__)  (_) (_)(__)(__)(_)\\_)(__)(__)\n");
-  printf("\nPhonon Analyzer for Fix-Phonon, version 2.%d, compiled on %s.\n", VERSION, __DATE__);
+  printf("\nPHonon ANAlyzer for Fix-Phonon, version 2.%d, compiled on %s.\n", VERSION, __DATE__);
 
 return;
 }

@@ -1,4 +1,4 @@
-LAMMPS (7 May 2011)
+LAMMPS (21 Feb 2013)
 # 3D simple cubic lattice simulation
 dimension   2
 boundary    p f p
@@ -14,7 +14,7 @@ communicate single cutoff 2.0
 read_data	data.pos
   2 = max bonds/atom
   orthogonal box = (0 0 0) to (64 1 1)
-  1 by 1 by 1 processor grid
+  1 by 1 by 1 MPI processor grid
   64 atoms
   64 bonds
   2 = max # of 1-2 neighbors
@@ -35,17 +35,17 @@ variable t equal 0.005
 # Langevin Damping variable
 variable d equal 0.5
 
-# Create velocities and equilibrate 
+# Create velocities and equilibrate
 compute   MyTemp all temp/partial 1 0 0
 velocity  all create $t 28711 mom yes rot yes dist gaussian temp MyTemp
-velocity  all create 0.005 28711 mom yes rot yes dist gaussian temp MyTemp
+velocity  all create 0.0050000000000000001041 28711 mom yes rot yes dist gaussian temp MyTemp
 velocity  all set NULL 0.0 0.0 units box
 #
 fix        1 all langevin $t $t $d $r
-fix        1 all langevin 0.005 $t $d $r
-fix        1 all langevin 0.005 0.005 $d $r
-fix        1 all langevin 0.005 0.005 0.5 $r
-fix        1 all langevin 0.005 0.005 0.5 571101
+fix        1 all langevin 0.0050000000000000001041 $t $d $r
+fix        1 all langevin 0.0050000000000000001041 0.0050000000000000001041 $d $r
+fix        1 all langevin 0.0050000000000000001041 0.0050000000000000001041 0.5 $r
+fix        1 all langevin 0.0050000000000000001041 0.0050000000000000001041 0.5 571101
 fix_modify 1 temp MyTemp
 fix        2 all setforce NULL 0. 0.
 fix        3 all nve
@@ -59,7 +59,7 @@ thermo   100
 
 #
 run 		 2000000
-Memory usage per processor = 2.00655 Mbytes
+Memory usage per processor = 2.01061 Mbytes
 Step Temp PotEng TotEng 
        0        0.005            0  0.002421875 
      100 0.0044233185 0.00069227571 0.0028348206 
@@ -20062,14 +20062,14 @@ Step Temp PotEng TotEng
  1999800 0.0059277298 0.0020055057 0.0048767498 
  1999900 0.0059290305  0.002299977 0.0051718512 
  2000000 0.0047343315 0.0026625608 0.0049557526 
-Loop time of 36.9726 on 1 procs for 2000000 steps with 64 atoms
+Loop time of 32.3665 on 1 procs for 2000000 steps with 64 atoms
 
 Pair  time (%) = 0 (0)
-Bond  time (%) = 8.9556 (24.2222)
-Neigh time (%) = 2.22293 (6.01237)
-Comm  time (%) = 2.5284 (6.83859)
-Outpt time (%) = 2.09206 (5.65841)
-Other time (%) = 21.1736 (57.2684)
+Bond  time (%) = 6.21905 (19.2145)
+Neigh time (%) = 3.25312 (10.0509)
+Comm  time (%) = 3.04437 (9.40594)
+Outpt time (%) = 0.0748212 (0.231169)
+Other time (%) = 19.7751 (61.0975)
 
 Nlocal:    64 ave 64 max 64 min
 Histogram: 1 0 0 0 0 0 0 0 0 0

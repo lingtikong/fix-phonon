@@ -1,4 +1,4 @@
-LAMMPS (7 May 2011)
+LAMMPS (21 Feb 2013)
 # 3D simple cubic lattice simulation
 dimension   2
 boundary    p f p
@@ -14,7 +14,7 @@ communicate single cutoff 2.0
 read_data	data.pos
   1 = max bonds/atom
   orthogonal box = (0 -1 -0.0001) to (16 1 0.0001)
-  1 by 1 by 1 processor grid
+  1 by 1 by 1 MPI processor grid
   16 atoms
   16 bonds
   2 = max # of 1-2 neighbors
@@ -38,17 +38,17 @@ variable d equal 0.5
 # time step
 timestep  0.005
 
-# Create velocities and equilibrate 
+# Create velocities and equilibrate
 compute   MyTemp all temp/partial 1 0 0
 velocity  all create $t 28711 mom yes rot yes dist gaussian temp MyTemp
-velocity  all create 0.005 28711 mom yes rot yes dist gaussian temp MyTemp
+velocity  all create 0.0050000000000000001041 28711 mom yes rot yes dist gaussian temp MyTemp
 velocity  all set NULL 0.0 0.0 units box
 #
 fix        1 all langevin $t $t $d $r
-fix        1 all langevin 0.005 $t $d $r
-fix        1 all langevin 0.005 0.005 $d $r
-fix        1 all langevin 0.005 0.005 0.5 $r
-fix        1 all langevin 0.005 0.005 0.5 571101
+fix        1 all langevin 0.0050000000000000001041 $t $d $r
+fix        1 all langevin 0.0050000000000000001041 0.0050000000000000001041 $d $r
+fix        1 all langevin 0.0050000000000000001041 0.0050000000000000001041 0.5 $r
+fix        1 all langevin 0.0050000000000000001041 0.0050000000000000001041 0.5 571101
 fix_modify 1 temp MyTemp
 fix        2 all setforce NULL 0. 0.
 fix        3 all nve
@@ -60,10 +60,11 @@ thermo_style  custom step temp pe etotal
 thermo_modify temp MyTemp
 thermo   100
 
-dump    	4 all atom 50000 dump_LJ_ANA.lammpstrj 
+dump    	4 all atom 50000 dump_LJ_ANA.lammpstrj
 
 run 		2000000
-Memory usage per processor = 1.90664 Mbytes
+WARNING: Inconsistent image flags (domain.cpp:594)
+Memory usage per processor = 1.91113 Mbytes
 Step Temp PotEng TotEng 
        0        0.005            0    0.0021875 
      100  0.002868961 0.00049005558  0.001745226 
@@ -20066,14 +20067,14 @@ Step Temp PotEng TotEng
  1999800 0.0031875782 0.0014186408 0.0028132062 
  1999900 0.0095469347 0.0012657077 0.0054424916 
  2000000 0.0050785787 0.0012610955 0.0034829737 
-Loop time of 9.77838 on 1 procs for 2000000 steps with 16 atoms
+Loop time of 11.2467 on 1 procs for 2000000 steps with 16 atoms
 
 Pair  time (%) = 0 (0)
-Bond  time (%) = 2.21758 (22.6784)
-Neigh time (%) = 0.624213 (6.3836)
-Comm  time (%) = 1.28554 (13.1468)
-Outpt time (%) = 0.0777321 (0.794938)
-Other time (%) = 5.57331 (56.9962)
+Bond  time (%) = 1.87007 (16.6277)
+Neigh time (%) = 1.11974 (9.95616)
+Comm  time (%) = 1.64898 (14.6619)
+Outpt time (%) = 0.0784338 (0.697395)
+Other time (%) = 6.52945 (58.0568)
 
 Nlocal:    16 ave 16 max 16 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
