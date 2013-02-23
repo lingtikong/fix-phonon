@@ -111,7 +111,9 @@ one atom, <I>nasr</I> = 1 is sufficient; while for other systems, <I>nasr</I> = 
 be enough.
 </P>
 <P>The <I>map_file</I> contains the mapping information between the lattice indices and
-the atom IDs, where the lattice indices start from 0.
+the atom IDs, which simply tells the code which atom sits at which lattice point;
+the lattice indices start from 0. An auxiliary code, <A HREF = "http://code.google.com/p/latgen">latgen</A>,
+can be employed to generate the compatible map file for various crystals.
 </P>
 <P>The unit of the measured dynamical matrix is <A HREF = "units.html">energy/distance^2/mass</A>.
 The coordinates for <I>q</I> points in the log file is in unit of the basis vectors

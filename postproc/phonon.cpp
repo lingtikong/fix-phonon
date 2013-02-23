@@ -42,7 +42,7 @@ Phonon::Phonon(DynMat *dm)
   // display the menu
   char str[MAXLINE];
   while ( 1 ){
-    printf("\n"); for (int i=0; i<27;i++) printf("="); printf(" Menu "); for (int i=0; i<27;i++) printf("="); printf("\n");
+    printf("\n"); for (int i=0; i<37;i++) printf("="); printf(" Menu "); for (int i=0; i<37;i++) printf("="); printf("\n");
     printf("  1. Phonon DOS evaluation;\n");
     printf("  2. Phonon dispersion curves;\n");
     printf("  3. Dynamical matrix at arbitrary q;\n");
@@ -59,7 +59,7 @@ Phonon::Phonon(DynMat *dm)
     printf("Your choice[0]: ");
     if (count_words(fgets(str,MAXLINE,stdin)) > 0) job = atoi(strtok(str," \t\n\r\f"));
     printf("\nYour selection: %d\n", job);
-    for (int i=0; i<60;i++) printf("=");printf("\n\n");
+    for (int i=0; i<80;i++) printf("=");printf("\n\n");
 
     // now to do the job according to user's choice
     if      (job == 1) pdos();
@@ -911,7 +911,7 @@ void Phonon::QMesh()
       for (int idim=0; idim<sysdim; idim++) atpos[i][idim] = dynmat->basis[i][idim];
 
       // display the unit cell info read
-      printf("\n");for (int ii=0; ii<60; ii++) printf("="); printf("\n");
+      printf("\n");for (int ii=0; ii<80; ii++) printf("="); printf("\n");
       printf("The basis vectors of the unit cell:\n");
       for (int idim=0; idim<3; idim++) printf("  A%d = %lg %lg %lg\n", idim+1, latvec[0][idim], latvec[1][idim], latvec[2][idim]);
       printf("Atom(s) in the unit cell:\n");
