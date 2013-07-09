@@ -9,7 +9,9 @@ http://www.netlib.org/clapack/
 
 The tricubic library is also needed to to tricubic interpolations,
 which could be obtained from:
-http://orca.princeton.edu/francois/software/tricubic/
+  http://orca.princeton.edu/francois/software/tricubic/
+or
+  http://code.google.com/p/fix-phonon/downloads/list
 
 The spglib (version 0.7.1) is optionally needed, enabling one to
 evaluate the phonon density of states or vibrational thermal

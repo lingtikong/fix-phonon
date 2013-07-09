@@ -139,7 +139,7 @@ void Phonon::pdos()
   df  = (fmax-fmin)/double(ndos-1);
   rdf = 1./df;
   memory->destroy(dos);
-  dos = memory->create(dos, ndos, "pdos:dos");
+  memory->create(dos, ndos, "pdos:dos");
   for (int i=0; i<ndos; i++) dos[i] = 0.;
 
   // now to calculate the DOS
@@ -250,7 +250,7 @@ void Phonon::ldos_rsgf()
   const double tpi = 8.*atan(1.);
   double **Hessian, scale;
   scale = dynmat->eml2f*tpi; scale *= scale;
-  Hessian = memory->create(Hessian, ndim, ndim, "phonon_ldos:Hessian");
+  memory->create(Hessian, ndim, ndim, "phonon_ldos:Hessian");
 
   double q0[3];
   q0[0] = q0[1] = q0[2] = 0.;
@@ -332,7 +332,7 @@ void Phonon::ldos_rsgf()
     ldos = memory->create(ldos,nlocal,ndos,dynmat->sysdim,"ldos_rsgf:ldos");
 
     memory->destroy(locals);
-    locals = memory->create(locals, nlocal, "ldos_rsgf:locals");
+    memory->create(locals, nlocal, "ldos_rsgf:locals");
 
     df  = (fmax-fmin)/double(ndos-1);
     rdf = 1./df;
@@ -625,8 +625,8 @@ void Phonon::smooth(double *array, const int npt)
   int nlag = npt/4;
 
   double *tmp, *table;
-  tmp   = memory->create(tmp, npt, "smooth:tmp");
-  table = memory->create(table, nlag+1, "smooth:table");
+  memory->create(tmp, npt, "smooth:tmp");
+  memory->create(table, nlag+1, "smooth:table");
   
   double fnorm = -1.;
   double sigma = 4., fac = 1./(sigma*sigma);
@@ -737,11 +737,11 @@ void Phonon::local_therm()
   fprintf(fp,"#-------------------------------------------------------------------------------\n");
 
   double **Uvib, **Svib, **Fvib, **Cvib, **ZPE;
-  Uvib = memory->create(Uvib,nlocal,sysdim,"local_therm:Uvib");
-  Svib = memory->create(Svib,nlocal,sysdim,"local_therm:Svib");
-  Fvib = memory->create(Fvib,nlocal,sysdim,"local_therm:Fvib");
-  Cvib = memory->create(Cvib,nlocal,sysdim,"local_therm:Cvib");
-  ZPE  = memory->create(ZPE ,nlocal,sysdim,"local_therm:ZPE");
+  memory->create(Uvib,nlocal,sysdim,"local_therm:Uvib");
+  memory->create(Svib,nlocal,sysdim,"local_therm:Svib");
+  memory->create(Fvib,nlocal,sysdim,"local_therm:Fvib");
+  memory->create(Cvib,nlocal,sysdim,"local_therm:Cvib");
+  memory->create(ZPE ,nlocal,sysdim,"local_therm:ZPE");
   // constants          J.s             J/K                J
   const double h = 6.62606896e-34, Kb = 1.380658e-23, eV = 1.60217733e-19;
   double T = dynmat->Tmeasure;
@@ -869,8 +869,8 @@ void Phonon::QMesh()
 #endif
     nq = nx*ny*nz;
     double w = 1./double(nq);
-    wt   = memory->create(wt,   nq, "QMesh:wt");
-    qpts = memory->create(qpts, nq, 3, "QMesh:qpts");
+    memory->create(wt,   nq, "QMesh:wt");
+    memory->create(qpts, nq, 3, "QMesh:qpts");
 
     int iq = 0;
     for (int i=0; i<nx; i++)
@@ -884,8 +884,8 @@ void Phonon::QMesh()
 #ifdef UseSPG
   }
   if ((method == 2) && (atpos == NULL)){
-    atpos = memory->create(atpos, dynmat->nucell,3,"QMesh:atpos");
-    attyp = memory->create(attyp, dynmat->nucell,  "QMesh:attyp");
+    memory->create(atpos, dynmat->nucell,3,"QMesh:atpos");
+    memory->create(attyp, dynmat->nucell,  "QMesh:attyp");
 
     for (int i=0; i<dynmat->nucell; i++)
     for (int idim=0; idim<3; idim++) atpos[i][idim] = 0.;
@@ -1030,8 +1030,8 @@ void Phonon::QMesh()
     // if spglib >= 1.0.3 is used
     //nq = spg_get_ir_reciprocal_mesh(grid_point, map, mesh, shift, is_time_reversal, latvec, pos, attyp, num_atom, symprec);
 
-    wt   = memory->create(wt,   nq, "QMesh:wt");
-    qpts = memory->create(qpts, nq,3,"QMesh:qpts");
+    memory->create(wt,   nq, "QMesh:wt");
+    memory->create(qpts, nq,3,"QMesh:qpts");
 
     int *iq2idx = new int[num_grid];
     int numq = 0;
@@ -1078,7 +1078,7 @@ void Phonon::ldos_egv()
   if (nmax < 1) return;
 
   memory->destroy(locals);
-  locals = memory->create(locals, nmax, "ldos_egv:locals");
+  memory->create(locals, nmax, "ldos_egv:locals");
 
   nlocal = 0;
   ptr = strtok(str," \t\n\r\f");
@@ -1118,8 +1118,8 @@ void Phonon::ldos_egv()
   memory->destroy(dos);
   memory->destroy(ldos);
 
-  dos  = memory->create(dos, ndos,"ldos_egv:dos");
-  ldos = memory->create(ldos,nlocal,ndos,sysdim,"ldos_egv:ldos");
+  memory->create(dos, ndos,"ldos_egv:dos");
+  memory->create(ldos,nlocal,ndos,sysdim,"ldos_egv:ldos");
 
   for (int i=0; i<ndos; i++) dos[i] = 0.;
 
@@ -1225,7 +1225,7 @@ void Phonon::ComputeAll()
   printf("\nNow to compute the phonons "); fflush(stdout);
   // now to calculate the frequencies at all q-points
   memory->destroy(eigs);
-  eigs = memory->create(eigs, nq,ndim,"QMesh_eigs");
+  memory->create(eigs, nq,ndim,"QMesh_eigs");
   
   for (int iq=0; iq<nq; iq++){
     if ((iq+1)%nprint == 0) {printf("."); fflush(stdout);}
@@ -1246,7 +1246,7 @@ int Phonon::count_words(const char *line)
 {
   int n = strlen(line) + 1;
   char *copy;
-  copy = memory->create(copy, n, "count_words:copy");
+  memory->create(copy, n, "count_words:copy");
   strcpy(copy,line);
 
   char *ptr;

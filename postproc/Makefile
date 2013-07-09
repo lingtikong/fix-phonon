@@ -9,18 +9,18 @@ INC    = $(LPKINC) $(TCINC) $(SPGINC)
 LIB    = $(LPKLIB) $(TCLIB) $(SPGLIB)
 #
 # cLapack library needed
-LPKINC = -I/opt/libs/clapack/3.2.1/include
-LPKLIB = -L/opt/libs/clapack/3.2.1/lib -lclapack -lblas -lf2c #-lm
+LPKINC = -I/opt/clapack/3.2.1/include
+LPKLIB = -L/opt/clapack/3.2.1/lib -lclapack -lblas -lf2c #-lm
 #
 # Tricubic library needed
-TCINC = -I/opt/libs/tricubic/1.0/include
-TCLIB = -L/opt/libs/tricubic/1.0/lib -ltricubic
+TCINC = -I/opt/tricubic/1.0/include
+TCLIB = -L/opt/tricubic/1.0/lib -ltricubic
 #
 # spglib 0.7.1, used to get the irreducible q-points
 # if UFLAG is not set, spglib won't be used.
 UFLAG  = -DUseSPG
-SPGINC = -I/opt/libs/spglib/0.7.1/include
-SPGLIB = -L/opt/libs/spglib/0.7.1/lib -lsymspg
+SPGINC = -I/opt/spglib/0.7.1/include
+SPGLIB = -L/opt/spglib/0.7.1/lib -lsymspg
 # if spglib > 0.7.1 is used, please 
 # 1) modify file phonon.cpp, instruction can be found by searching 0.7.1
 # 2) uncomment the following two lines

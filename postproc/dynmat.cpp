@@ -100,9 +100,9 @@ DynMat::DynMat(int narg, char **arg)
   }
 
   // now to allocate memory for DM
-  memory = new Memory;
-  DM_all = memory->create(DM_all, npt, fftdim2, "DynMat:DM_all");
-  DM_q   = memory->create(DM_q, fftdim,fftdim,"DynMat:DM_q");
+  memory = new Memory();
+  memory->create(DM_all, npt, fftdim2, "DynMat:DM_all");
+  memory->create(DM_q, fftdim,fftdim,"DynMat:DM_q");
 
   // read all dynamical matrix info into DM_all
   if ( fread(DM_all[0], sizeof(doublecomplex), npt*fftdim2, fp) != size_t(npt*fftdim2)){
@@ -113,9 +113,9 @@ DynMat::DynMat(int narg, char **arg)
 
   // now try to read unit cell info from the binary file
   flag_latinfo = 0;
-  basis = memory->create(basis,nucell,sysdim,"DynMat:basis");
-  attyp = memory->create(attyp,nucell, "DynMat:attyp");
-  M_inv_sqrt = memory->create(M_inv_sqrt, nucell, "DynMat:M_inv_sqrt");
+  memory->create(basis,nucell,sysdim,"DynMat:basis");
+  memory->create(attyp,nucell, "DynMat:attyp");
+  memory->create(M_inv_sqrt, nucell, "DynMat:M_inv_sqrt");
   int flag_mass_read = 0;
   
   if ( fread(&Tmeasure,   sizeof(double), 1, fp) == 1) flag_latinfo |= 1;
@@ -254,9 +254,9 @@ int DynMat::geteigen(double *egv, int flag)
   liwork = 3 + 5*n;
   lda    = n;
 
-  work  = memory->create(work,  lwork,  "geteigen:work");
-  rwork = memory->create(rwork, lrwork, "geteigen:rwork");
-  iwork = memory->create(iwork, liwork, "geteigen:iwork");
+  memory->create(work,  lwork,  "geteigen:work");
+  memory->create(rwork, lrwork, "geteigen:rwork");
+  memory->create(iwork, liwork, "geteigen:iwork");
 
   zheevd_(&jobz, &uplo, &n, DM_q[0], &lda, w, work, &lwork, rwork, &lrwork, iwork, &liwork, &info);
  

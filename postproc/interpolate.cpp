@@ -15,7 +15,7 @@ Interpolate::Interpolate(int nx, int ny, int nz, int ndm, doublecomplex **DM)
   Nz = nz;
   Npt = Nx*Ny*Nz;
   ndim = ndm;
-  memory = new Memory;
+  memory = new Memory();
 
   which = UseGamma = 0;
 
@@ -33,13 +33,13 @@ void Interpolate::tricubic_init()
 {
   // prepare necessary data for tricubic
   if (flag_allocated_dfs == 0){
-    Dfdx = memory->create(Dfdx, Npt, ndim, "Interpolate_Interpolate:Dfdx");
-    Dfdy = memory->create(Dfdy, Npt, ndim, "Interpolate_Interpolate:Dfdy");
-    Dfdz = memory->create(Dfdz, Npt, ndim, "Interpolate_Interpolate:Dfdz");
-    D2fdxdy = memory->create(D2fdxdy, Npt, ndim, "Interpolate_Interpolate:D2fdxdy");
-    D2fdxdz = memory->create(D2fdxdz, Npt, ndim, "Interpolate_Interpolate:D2fdxdz");
-    D2fdydz = memory->create(D2fdydz, Npt, ndim, "Interpolate_Interpolate:D2fdydz");
-    D3fdxdydz = memory->create(D3fdxdydz, Npt, ndim, "Interpolate_Interpolate:D2fdxdydz");
+    memory->create(Dfdx, Npt, ndim, "Interpolate_Interpolate:Dfdx");
+    memory->create(Dfdy, Npt, ndim, "Interpolate_Interpolate:Dfdy");
+    memory->create(Dfdz, Npt, ndim, "Interpolate_Interpolate:Dfdz");
+    memory->create(D2fdxdy, Npt, ndim, "Interpolate_Interpolate:D2fdxdy");
+    memory->create(D2fdxdz, Npt, ndim, "Interpolate_Interpolate:D2fdxdz");
+    memory->create(D2fdydz, Npt, ndim, "Interpolate_Interpolate:D2fdydz");
+    memory->create(D3fdxdydz, Npt, ndim, "Interpolate_Interpolate:D2fdxdydz");
 
     flag_allocated_dfs = 1;
   }
