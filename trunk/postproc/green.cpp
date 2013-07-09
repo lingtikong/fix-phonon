@@ -45,7 +45,7 @@ Green::Green(const int ntm, const int sdim, const int niter, const double min, c
   H = Hessian; iatom = itm;
   ldos = lpdos;
 
-  memory = new Memory;
+  memory = new Memory();
   if (natom < 1 || iatom < 0 || iatom >= natom){
     printf("\nError: Wrong number of total atoms or wrong index of interested atom!\n");
     return;
@@ -58,9 +58,9 @@ Green::Green(const int ntm, const int sdim, const int niter, const double min, c
 
   // initialize variables and allocate local memories
   dw = (wmax - wmin)/double(nw-1);
-  alpha = memory->create(alpha, sysdim,nit,  "Green_Green:alpha");
-  beta  = memory->create(beta,  sysdim,nit+1,"Green_Green:beta");
-  //ldos  = memory->create(ldos,  nw,sysdim, "Green_Green:ldos");
+  memory->create(alpha, sysdim,nit,  "Green_Green:alpha");
+  memory->create(beta,  sysdim,nit+1,"Green_Green:beta");
+  //memory->create(ldos,  nw,sysdim, "Green_Green:ldos");
 
   // use Lanczos algorithm to diagonalize the Hessian
   Lanczos();

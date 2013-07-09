@@ -19,12 +19,10 @@ The files under this directory:
 14) log.lammps             : LAMMPS log file
 15) map.in                 : LAMMPS input file for fix-phonon
 16) pdisp.eps              : figure of phonon dispersion curves
-17) pdisp.gnuplot          : auto generated gnuplot script to produce pdisp.eps from disp.dat
-18) pdos.eps               : figure of phonon density of states
-19) pdos.gnuplot           : auto generated gnuplot script to produce pdos.eps from dos.dat
-20) plot.disp              : gnuplot script to generate pdisp.eps (old)
-21) plot.dos               : gnuplot script to generate pdos.eps (old)
-22) README                 : this file
+17) pdos.eps               : figure of phonon density of states
+18) plot.disp              : gnuplot script to generate pdisp.eps
+19) plot.dos               : gnuplot script to generate pdos.eps
+20) README                 : this file
 
 To run this example, simply invoke: 
 -> lmp -in in.EAM3D -screen none

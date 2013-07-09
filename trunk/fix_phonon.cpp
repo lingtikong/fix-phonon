@@ -138,27 +138,27 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   delete []nx_loc;
 
   fft   = new FFT3d(lmp,world,nz,ny,nx,0,nz-1,0,ny-1,nxlo,nxhi,0,nz-1,0,ny-1,nxlo,nxhi,0,0,&mysize);
-  fft_data = (double *) memory->smalloc(MAX(1,mynq)*2*sizeof(double),"fix_phonon:fft_data");
+  memory->create(fft_data, MAX(1,mynq)*2, "fix_phonon:fft_data");
 
   // allocate variables; MAX(1,... is used because NULL buffer will result in error for MPI
-  RIloc = memory->create(RIloc,nGFatoms,(sysdim+1),"fix_phonon:RIloc");
-  RIall = memory->create(RIall,nGFatoms,(sysdim+1),"fix_phonon:RIall");
-  Rsort = memory->create(Rsort,nGFatoms, sysdim, "fix_phonon:Rsort");
+  memory->create(RIloc,nGFatoms,(sysdim+1),"fix_phonon:RIloc");
+  memory->create(RIall,nGFatoms,(sysdim+1),"fix_phonon:RIall");
+  memory->create(Rsort,nGFatoms, sysdim, "fix_phonon:Rsort");
                               
-  Rnow  = memory->create(Rnow, MAX(1,mynpt),fft_dim,"fix_phonon:Rnow");
-  Rsum  = memory->create(Rsum, MAX(1,mynpt),fft_dim,"fix_phonon:Rsum");
+  memory->create(Rnow, MAX(1,mynpt),fft_dim,"fix_phonon:Rnow");
+  memory->create(Rsum, MAX(1,mynpt),fft_dim,"fix_phonon:Rsum");
                               
-  basis = memory->create(basis,nucell, sysdim, "fix_phonon:basis");
+  memory->create(basis,nucell, sysdim, "fix_phonon:basis");
 
   // because of hermit, only nearly half of q points are stored
-  Rqnow = memory->create(Rqnow,MAX(1,mynq),fft_dim, "fix_phonon:Rqnow");
-  Rqsum = memory->create(Rqsum,MAX(1,mynq),fft_dim2,"fix_phonon:Rqsum");
-  Phi_q = memory->create(Phi_q,MAX(1,mynq),fft_dim2,"fix_phonon:Phi_q");
+  memory->create(Rqnow,MAX(1,mynq),fft_dim, "fix_phonon:Rqnow");
+  memory->create(Rqsum,MAX(1,mynq),fft_dim2,"fix_phonon:Rqsum");
+  memory->create(Phi_q,MAX(1,mynq),fft_dim2,"fix_phonon:Phi_q");
 
   if (me == 0) // variable to collect all local Phi to root
-    Phi_all = memory->create(Phi_all,ntotal,fft_dim2,"fix_phonon:Phi_all");
+    memory->create(Phi_all,ntotal,fft_dim2,"fix_phonon:Phi_all");
   else
-    Phi_all = memory->create(Phi_all,1,1,"fix_phonon:Phi_all");
+    memory->create(Phi_all,1,1,"fix_phonon:Phi_all");
 
   // output some information on the system to log file
   if (me == 0){
