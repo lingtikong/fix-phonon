@@ -323,37 +323,15 @@ void FixPhonon::end_of_step()
 
   // evaluate R(r) on local proc
   nfind = 0;
-  if (domain->triclinic == 0) { // for orthogonal lattice
-    for (i=0; i<nlocal; i++){
-      if (mask[i] & groupbit){
-        itag = tag[i];
-        idx  = tag2surf[itag];
-        
-        xbox = (image[i] & 1023) - 512;
-        ybox = (image[i] >> 10 & 1023) - 512;
-        zbox = (image[i] >> 20) - 512;
-        xcur[0] = x[i][0] + xprd*xbox;
-        xcur[1] = x[i][1] + yprd*ybox;
-        xcur[2] = x[i][2] + zprd*zbox;
-        for (idim=0; idim<sysdim; idim++) RIloc[nfind][idim] = xcur[idim];
-        RIloc[nfind++][sysdim] = idx;
-      }
-    }
-  }else{                      // for non-orthogonal lattice
-    for (i=0; i<nlocal; i++){
-      if (mask[i] & groupbit){
-        itag = tag[i];
-        idx  = tag2surf[itag];
+  for (i=0; i<nlocal; i++){
+    if (mask[i] & groupbit){
+      itag = tag[i];
+      idx  = tag2surf[itag];
 
-        xbox = (image[i] & 1023) - 512;
-        ybox = (image[i] >> 10 & 1023) - 512;
-        zbox = (image[i] >> 20) - 512;
-        xcur[0] = x[i][0] + h[0]*xbox + h[5]*ybox + h[4]*zbox;
-        xcur[1] = x[i][1] + h[1]*ybox + h[3]*zbox;
-        xcur[2] = x[i][2] + h[2]*zbox;
-        for (idim=0; idim<sysdim; idim++) RIloc[nfind][idim] = xcur[idim];
-        RIloc[nfind++][sysdim] = idx;
-      }
+      domain->unmap(x[i], image[i], xcur);
+        
+      for (idim=0; idim<sysdim; idim++) RIloc[nfind][idim] = xcur[idim];
+      RIloc[nfind++][sysdim] = (double) idx;
     }
   }
 
@@ -374,9 +352,8 @@ void FixPhonon::end_of_step()
   MPI_Scatterv(Rsort[0],fft_cnts,fft_disp, MPI_DOUBLE, Rnow[0], fft_nsend, MPI_DOUBLE,0,world);
 
   // get Rsum
-  for (idx=0; idx<mynpt; idx++){
-    for (idim=0; idim<fft_dim; idim++) Rsum[idx][idim] += Rnow[idx][idim];
-  }
+  for (idx=0; idx<mynpt; idx++)
+  for (idim=0; idim<fft_dim; idim++) Rsum[idx][idim] += Rnow[idx][idim];
 
   // FFT R(r) to get R(q)
   for (idim=0; idim<fft_dim; idim++){
