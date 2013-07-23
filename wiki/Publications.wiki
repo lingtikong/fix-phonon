@@ -7,3 +7,4 @@
   # Pei QX _et al._, _A theoretical analysis of the thermal conductivity of hydrogenated graphene_, [http://dx.doi.org/10.1016/j.carbon.2011.06.083 Carbon 49(14):4752-4759, 2011.]
   # Liu B _et al._, _Morphology and in-plane thermal conductivity of hybrid graphene sheets_, [http://dx.doi.org/10.1063/1.4767388 Applied Physics Letters 101(21):211909, 2012.]
   # Eugene H. Cook _et al._, _Mechanism of friction in rotating carbon nanotube bearings_, [http://dx.doi.org/10.1016/j.jmps.2012.08.004 Journal of the Mechanics and Physics of Solids 61(2):652-673, 2013.]
+  # Ghuman K.K., Goyal N., Prakash S., _Vibrational density of states of TiO,,2,, nanoparticles_, [http://dx.doi/org/10.1016/j.jnoncrysol.2013.04.022 Journal of Non-Crystalline Solids 373-374:28-33, 2013.]
