@@ -517,6 +517,8 @@ void FixPhonon::readmap()
 
   // auto-generate mapfile for "cluster" (gamma only system)
   if (strcmp(mapfile, "GAMMA") == 0){  // auto-generate mapfile for "cluster" (gamma only system)
+     nx = ny = nz = 1;
+     nucell = nGFatoms;
      // get atom IDs on local proc
      int nfind = 0;
      for (int i = 0; i < atom->nlocal; ++i){
