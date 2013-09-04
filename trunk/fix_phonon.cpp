@@ -514,10 +514,37 @@ return;
 void FixPhonon::readmap()
 {
   int info = 0;
-  char strtmp[MAXLINE];
-  FILE *fp;
 
-  fp = fopen(mapfile, "r");
+  // auto-generate mapfile for "cluster" (gamma only system)
+  if (strcmp(mapfile, "GAMMA") == 0){  // auto-generate mapfile for "cluster" (gamma only system)
+     // get atom IDs on local proc
+     int nfind = 0;
+     for (int i = 0; i < atom->nlocal; ++i){
+       if (atom->mask[i] & groupbit){
+         itag = atom->tag[i];
+         RIloc[nfind++][0] = double(itag);
+       }
+     }
+    
+     // gather IDs on local proc
+     displs[0] = 0;
+     for (int i = 0; i < nprocs; ++i) recvcnts[i] = 0;
+     MPI_Allgather(&nfind,1,MPI_INT,recvcnts,1,MPI_INT,world);
+     for (int i = 1; i < nprocs; ++i) displs[i] = displs[i-1] + recvcnts[i-1];
+    
+     MPI_Allgatherv(RIloc[0],nfind,MPI_DOUBLE,RIall[0],recvcnts,displs,MPI_DOUBLE,world);
+     for (int i = 0; i < nGFatoms; ++i){
+       itag = static_cast<int>(RIall[i][0]);
+       tag2surf[itag] = i;
+       surf2tag[i] = itag;
+     }
+
+    return;
+  }
+
+  // read from map file
+  char strtmp[MAXLINE];
+  FILE *fp = fopen(mapfile, "r");
   if (fp == NULL){
     char str[MAXLINE];
     sprintf(str,"Cannot open input map file %s", mapfile);
