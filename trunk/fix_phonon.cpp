@@ -43,7 +43,7 @@ using namespace FixConst;
 
 #define INVOKED_SCALAR 1
 #define INVOKED_VECTOR 2
-#define MAXLINE 256
+#define MAXLINE 512
 
 static const char cite_fix_phonon[] =
   "fix phonon command:\n\n"
@@ -86,7 +86,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   logfile = new char[n+4];
   sprintf(logfile,"%s.log",prefix);
   
-  int sdim = 4;
+  int sdim = sysdim = domain->dimension;
   int iarg = 8;
   nasr = 20;
 
@@ -95,6 +95,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
     if (strcmp(arg[iarg],"sysdim") == 0){
       if (++iarg >= narg) error->all(FLERR,"Illegal fix phonon command: incomplete command line options.");
       sdim = force->inumeric(FLERR, arg[iarg]);
+      if (sdim < 1) error->all(FLERR,"Illegal fix phonon command: sysdim should not be less than 1.");
 
     } else if (strcmp(arg[iarg],"nasr") == 0){
       if (++iarg >= narg) error->all(FLERR,"Illegal fix phonon command: incomplete command line options.");
@@ -108,7 +109,6 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   }
 
   // get the dimension of the simulation; 1D is possible by specifying the option of "sysdim 1"
-  sysdim = domain->dimension;
   if (sdim < sysdim) sysdim = sdim;
   nasr = MAX(0, nasr);
 
@@ -533,35 +533,39 @@ void FixPhonon::readmap()
   int info = 0;
 
   // auto-generate mapfile for "cluster" (gamma only system)
-  if (strcmp(mapfile, "GAMMA") == 0){  // auto-generate mapfile for "cluster" (gamma only system)
-     nx = ny = nz = 1;
-     nucell = ngroup;
-     // get atom IDs on local proc
-     int nfind = 0;
-     for (int i = 0; i < atom->nlocal; ++i){
-       if (atom->mask[i] & groupbit){
-         itag = atom->tag[i];
-         RIloc[nfind++][0] = double(itag);
-       }
-     }
-    
-     // gather IDs on local proc
-     displs[0] = 0;
-     for (int i = 0; i < nprocs; ++i) recvcnts[i] = 0;
-     MPI_Allgather(&nfind,1,MPI_INT,recvcnts,1,MPI_INT,world);
-     for (int i = 1; i < nprocs; ++i) displs[i] = displs[i-1] + recvcnts[i-1];
-    
-     MPI_Allgatherv(RIloc[0],nfind,MPI_DOUBLE,RIall[0],recvcnts,displs,MPI_DOUBLE,world);
-     for (int i = 0; i < ngroup; ++i){
-       itag = static_cast<int>(RIall[i][0]);
-       tag2surf[itag] = i;
-       surf2tag[i] = itag;
-     }
+  if (strcmp(mapfile, "GAMMA") == 0){
+    nx = ny = nz = 1;
+    nucell = ngroup;
 
+    int *tag_loc, *tag_all;
+    memory->create(tag_loc,ngroup,"fix_phonon:tag_loc");
+    memory->create(tag_all,ngroup,"fix_phonon:tag_all");
+
+    // get atom IDs on local proc
+    int nfind = 0;
+    for (int i = 0; i < atom->nlocal; ++i){
+      if (atom->mask[i] & groupbit) tag_loc[nfind++] = atom->tag[i];
+    }
+   
+    // gather IDs on local proc
+    displs[0] = 0;
+    for (int i = 0; i < nprocs; ++i) recvcnts[i] = 0;
+    MPI_Allgather(&nfind,1,MPI_INT,recvcnts,1,MPI_INT,world);
+    for (int i = 1; i < nprocs; ++i) displs[i] = displs[i-1] + recvcnts[i-1];
+   
+    MPI_Allgatherv(tag_loc,nfind,MPI_INT,tag_all,recvcnts,displs,MPI_INT,world);
+    for (int i = 0; i < ngroup; ++i){
+      itag = tag_all[i];
+      tag2surf[itag] = i;
+      surf2tag[i] = itag;
+    }
+
+    memory->destroy(tag_loc);
+    memory->destroy(tag_all);
     return;
   }
 
-  // read from map file
+  // read from map file for others
   char strtmp[MAXLINE];
   FILE *fp = fopen(mapfile, "r");
   if (fp == NULL){
@@ -647,7 +651,9 @@ void FixPhonon::postprocess( )
       fft_data[m++] = Rnow[idx][idim];
       fft_data[m++] = 0.;
     }
+
     fft->compute(fft_data,fft_data,-1);
+
     m = 0;
     for (idq = 0; idq < mynq; ++idq){
       Rqnow[idq][idim]  = std::complex<double>(fft_data[m], fft_data[m+1]);
