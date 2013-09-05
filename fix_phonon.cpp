@@ -23,19 +23,20 @@
      konglt@sjtu.edu.cn; konglt@gmail.com
 ------------------------------------------------------------------------- */
 
+#include "string.h"
+#include "fix_phonon.h"
 #include "atom.h"
 #include "compute.h"
 #include "domain.h"
-#include "error.h"
-#include "fix_phonon.h"
 #include "fft3d_wrap.h"
 #include "force.h"
 #include "group.h"
 #include "lattice.h"
-#include "memory.h"
 #include "modify.h"
 #include "update.h"
-#include "string.h"
+#include "citeme.h"
+#include "memory.h"
+#include "error.h"
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -44,17 +45,32 @@ using namespace FixConst;
 #define INVOKED_VECTOR 2
 #define MAXLINE 256
 
+static const char cite_fix_phonon[] =
+  "fix phonon command:\n\n"
+  "@Article{Kong11,\n"
+  " author = {L. T. Kong},\n"
+  " title = {Phonon dispersion measured directly from molecular dynamics simulations},\n"
+  " journal = {Comp.~Phys.~Comm.},\n"
+  " year =    2011,\n"
+  " volume =  182,\n"
+  " pages =   {2201--2207}\n"
+  "}\n\n";
+
+/* ---------------------------------------------------------------------- */
+
 FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
 {
+  if (lmp->citeme) lmp->citeme->add(cite_fix_phonon);
+
   MPI_Comm_rank(world,&me);
   MPI_Comm_size(world,&nprocs);
   
   if (narg < 8) error->all(FLERR,"Illegal fix phonon command: number of arguments < 8");
 
-  nevery = atoi(arg[3]);   // Calculate this fix every n steps!
+  nevery = force->inumeric(FLERR, arg[3]);   // Calculate this fix every n steps!
   if (nevery < 1) error->all(FLERR,"Illegal fix phonon command");
 
-  nfreq  = atoi(arg[4]);   // frequency to output result
+  nfreq  = force->inumeric(FLERR, arg[4]);   // frequency to output result
   if (nfreq < 1) error->all(FLERR,"Illegal fix phonon command");
 
   waitsteps = ATOBIGINT(arg[5]); // Wait this many timesteps before actually measuring
@@ -78,15 +94,16 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   while (iarg < narg){
     if (strcmp(arg[iarg],"sysdim") == 0){
       if (++iarg >= narg) error->all(FLERR,"Illegal fix phonon command: incomplete command line options.");
-      sdim = atoi(arg[iarg]);
+      sdim = force->inumeric(FLERR, arg[iarg]);
 
     } else if (strcmp(arg[iarg],"nasr") == 0){
       if (++iarg >= narg) error->all(FLERR,"Illegal fix phonon command: incomplete command line options.");
-      nasr = atoi(arg[iarg]);
+      nasr = force->inumeric(FLERR, arg[iarg]);
 
     } else {
       error->all(FLERR,"Illegal fix phonon command: unknown option read!");
     }
+
     ++iarg;
   }
 
@@ -96,8 +113,8 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   nasr = MAX(0, nasr);
 
   // get the total number of atoms in group
-  nGFatoms = static_cast<int>(group->count(igroup));
-  if (nGFatoms < 1) error->all(FLERR,"No atom found for fix phonon!");
+  ngroup = static_cast<int>(group->count(igroup));
+  if (ngroup < 1) error->all(FLERR,"No atom found for fix phonon!");
 
   // MPI gatherv related variables
   recvcnts = new int[nprocs];
@@ -141,9 +158,9 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   memory->create(fft_data, MAX(1,mynq)*2, "fix_phonon:fft_data");
 
   // allocate variables; MAX(1,... is used because NULL buffer will result in error for MPI
-  memory->create(RIloc,nGFatoms,(sysdim+1),"fix_phonon:RIloc");
-  memory->create(RIall,nGFatoms,(sysdim+1),"fix_phonon:RIall");
-  memory->create(Rsort,nGFatoms, sysdim, "fix_phonon:Rsort");
+  memory->create(RIloc,ngroup,(sysdim+1),"fix_phonon:RIloc");
+  memory->create(RIall,ngroup,(sysdim+1),"fix_phonon:RIall");
+  memory->create(Rsort,ngroup, sysdim, "fix_phonon:Rsort");
                               
   memory->create(Rnow, MAX(1,mynpt),fft_dim,"fix_phonon:Rnow");
   memory->create(Rsum, MAX(1,mynpt),fft_dim,"fix_phonon:Rsum");
@@ -169,12 +186,12 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
     }
     for (int i = 0; i < 60; ++i) fprintf(flog,"#"); fprintf(flog,"\n");
     fprintf(flog,"# group name of the atoms under study      : %s\n", group->names[igroup]);
-    fprintf(flog,"# total number of atoms in the group       : %d\n", nGFatoms);
+    fprintf(flog,"# total number of atoms in the group       : %d\n", ngroup);
     fprintf(flog,"# dimension of the system                  : %d D\n", sysdim);
     fprintf(flog,"# number of atoms per unit cell            : %d\n", nucell);
     fprintf(flog,"# dimension of the FFT mesh                : %d x %d x %d\n", nx, ny, nz);
     fprintf(flog,"# number of wait steps before measurement  : " BIGINT_FORMAT "\n", waitsteps);
-    fprintf(flog,"# frequency of GFC measurement             : %d\n", nevery);
+    fprintf(flog,"# frequency of the measurement             : %d\n", nevery);
     fprintf(flog,"# output result after this many measurement: %d\n", nfreq);
     fprintf(flog,"# number of processors used by this run    : %d\n", nprocs);
     for (int i = 0; i < 60; ++i) fprintf(flog,"#"); fprintf(flog,"\n");
@@ -183,7 +200,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
     fprintf(flog,"%d %d %d %d\n", nx, ny, nz, nucell);
     fprintf(flog,"# l1 l2 l3 k atom_id\n");
     int ix, iy, iz, iu;
-    for (idx = 0; idx < nGFatoms; ++idx){
+    for (idx = 0; idx < ngroup; ++idx){
       itag = surf2tag[idx];
       iu   = idx%nucell;
       iz   = (idx/nucell)%nz;
@@ -211,7 +228,7 @@ return;
 
 void FixPhonon::post_run()
 {
-  // compute and output final GFC results
+  // compute and output final results
   if (ifreq > 0 && ifreq != nfreq) postprocess();
   if (me == 0) fclose(flog);
 }
@@ -296,7 +313,7 @@ void FixPhonon::setup(int flag)
   for (int j = 0; j < sysdim; ++j) basis[i][j] = 0.;
 
   prev_nstep = update->ntimestep;
-  GFcounter  = ifreq = 0;
+  neval  = ifreq = 0;
 
 return;
 }
@@ -349,7 +366,7 @@ void FixPhonon::end_of_step()
 
   MPI_Gatherv(RIloc[0],nfind,MPI_DOUBLE,RIall[0],recvcnts,displs,MPI_DOUBLE,0,world);
   if (me == 0){
-    for (i = 0; i < nGFatoms; ++i){
+    for (i = 0; i < ngroup; ++i){
       idx = static_cast<int>(RIall[i][sysdim]);
       for (idim = 0; idim < sysdim; ++idim) Rsort[idx][idim] = RIall[i][idim];
     }
@@ -398,7 +415,7 @@ void FixPhonon::end_of_step()
   for (int i = 0; i < 6; ++i) hsum[i] += h[i];
 
   // increment counter
-  ++GFcounter;
+  ++neval;
 
   // compute and output Phi_q after every nfreq evaluations
   if (++ifreq == nfreq) postprocess();
@@ -411,8 +428,8 @@ return;
 double FixPhonon::memory_usage()
 {
   double bytes = sizeof(double)*2*mynq
-               + sizeof(std::map<int,int>)*2*nGFatoms
-               + sizeof(double)*(nGFatoms*(3*sysdim+2)+mynpt*fft_dim*2)
+               + sizeof(std::map<int,int>)*2*ngroup
+               + sizeof(double)*(ngroup*(3*sysdim+2)+mynpt*fft_dim*2)
                + sizeof(std::complex<double>)*MAX(1,mynq)*fft_dim *(1+2*fft_dim)
                + sizeof(std::complex<double>)*ntotal*fft_dim2
                + sizeof(int) * nprocs * 4;
@@ -518,7 +535,7 @@ void FixPhonon::readmap()
   // auto-generate mapfile for "cluster" (gamma only system)
   if (strcmp(mapfile, "GAMMA") == 0){  // auto-generate mapfile for "cluster" (gamma only system)
      nx = ny = nz = 1;
-     nucell = nGFatoms;
+     nucell = ngroup;
      // get atom IDs on local proc
      int nfind = 0;
      for (int i = 0; i < atom->nlocal; ++i){
@@ -535,7 +552,7 @@ void FixPhonon::readmap()
      for (int i = 1; i < nprocs; ++i) displs[i] = displs[i-1] + recvcnts[i-1];
     
      MPI_Allgatherv(RIloc[0],nfind,MPI_DOUBLE,RIall[0],recvcnts,displs,MPI_DOUBLE,world);
-     for (int i = 0; i < nGFatoms; ++i){
+     for (int i = 0; i < ngroup; ++i){
        itag = static_cast<int>(RIall[i][0]);
        tag2surf[itag] = i;
        surf2tag[i] = itag;
@@ -554,25 +571,25 @@ void FixPhonon::readmap()
   }
 
   if (fgets(strtmp,MAXLINE,fp) == NULL) error->all(FLERR,"Error while reading header of mapping file!");
-  nx = atoi(strtok(strtmp, " \n\t\r\f"));
-  ny = atoi(strtok(NULL,   " \n\t\r\f"));
-  nz = atoi(strtok(NULL,   " \n\t\r\f"));
-  nucell = atoi(strtok(NULL,   " \n\t\r\f"));
+  nx = force->inumeric(FLERR, strtok(strtmp, " \n\t\r\f"));
+  ny = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
+  nz = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
+  nucell = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
   ntotal = nx*ny*nz;
-  if (ntotal*nucell != nGFatoms) error->all(FLERR,"FFT mesh and number of atoms in group mismatch!");
+  if (ntotal*nucell != ngroup) error->all(FLERR,"FFT mesh and number of atoms in group mismatch!");
   
   // second line of mapfile is comment
   if (fgets(strtmp,MAXLINE,fp) == NULL) error->all(FLERR,"Error while reading comment of mapping file!");
 
   int ix, iy, iz, iu;
   // the remaining lines carry the mapping info
-  for (int i = 0; i < nGFatoms; ++i){
+  for (int i = 0; i < ngroup; ++i){
     if (fgets(strtmp,MAXLINE,fp) == NULL) {info = 1; break;} 
-    ix = atoi(strtok(strtmp, " \n\t\r\f"));
-    iy = atoi(strtok(NULL,   " \n\t\r\f"));
-    iz = atoi(strtok(NULL,   " \n\t\r\f"));
-    iu = atoi(strtok(NULL,   " \n\t\r\f"));
-    itag = atoi(strtok(NULL,   " \n\t\r\f"));
+    ix = force->inumeric(FLERR, strtok(strtmp, " \n\t\r\f"));
+    iy = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
+    iz = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
+    iu = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
+    itag = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
 
     // check if index is in correct range
     if (ix < 0 || ix >= nx || iy < 0 || iy >= ny || iz < 0 || iz >= nz|| iu < 0 || iu >= nucell) {info = 2; break;}
@@ -584,7 +601,7 @@ void FixPhonon::readmap()
   }
   fclose(fp);
 
-  if (tag2surf.size() != surf2tag.size() || tag2surf.size() != static_cast<std::size_t>(nGFatoms) )
+  if (tag2surf.size() != surf2tag.size() || tag2surf.size() != static_cast<std::size_t>(ngroup) )
     error->all(FLERR,"The mapping is incomplete!");
   if (info) error->all(FLERR,"Error while reading mapping file!");
   
@@ -609,19 +626,19 @@ return;
  * --------------------------------------------------------------------*/
 void FixPhonon::postprocess( )
 {
-  if (GFcounter < 1) return;
+  if (neval < 1) return;
 
   ifreq = 0;
   int idim, jdim, ndim;
-  double invGFcounter = 1.0 /double(GFcounter);
+  double inv_neval = 1.0 /double(neval);
 
   // to get <Rq.Rq*>
   for (idq = 0; idq < mynq; ++idq)
-  for (idim = 0; idim < fft_dim2; ++idim) Phi_q[idq][idim] = Rqsum[idq][idim]*invGFcounter;
+  for (idim = 0; idim < fft_dim2; ++idim) Phi_q[idq][idim] = Rqsum[idq][idim]*inv_neval;
 
   // to get <R>
   for (idx = 0; idx < mynpt; ++idx)
-  for (idim = 0; idim < fft_dim; ++idim) Rnow[idx][idim] = Rsum[idx][idim] * invGFcounter;
+  for (idim = 0; idim < fft_dim; ++idim) Rnow[idx][idim] = Rsum[idx][idim] * inv_neval;
 
   // to get <R>q
   for (idim = 0; idim < fft_dim; ++idim){
@@ -647,7 +664,7 @@ void FixPhonon::postprocess( )
 
   // to get Phi = KT.G^-1; normalization of FFTW data is done here
   double boltz = force->boltz, kbtsqrt[sysdim], TempAve = 0.;
-  double TempFac = invGFcounter*inv_nTemp;
+  double TempFac = inv_neval*inv_nTemp;
   double NormFac = TempFac*double(ntotal);
 
   for (idim = 0; idim < sysdim; ++idim){
@@ -677,46 +694,44 @@ void FixPhonon::postprocess( )
 
     // get basis info
     for (idim = 0;      idim < sysdim;  ++idim) basis_root[idim]  = 0.;
-    for (idim = sysdim; idim < fft_dim; ++idim) basis_root[idim] /= double(ntotal)*double(GFcounter);
+    for (idim = sysdim; idim < fft_dim; ++idim) basis_root[idim] /= double(ntotal)*double(neval);
     // get unit cell base vector info; might be incorrect if MD pbc and FixPhonon pbc mismatch.
     double basevec[9];
     basevec[1] = basevec[2] = basevec[5] = 0.;
-    basevec[0] = hsum[0] * invGFcounter / double(nx);
-    basevec[4] = hsum[1] * invGFcounter / double(ny);
-    basevec[8] = hsum[2] * invGFcounter / double(nz);
-    basevec[7] = hsum[3] * invGFcounter / double(nz);
-    basevec[6] = hsum[4] * invGFcounter / double(nz);
-    basevec[3] = hsum[5] * invGFcounter / double(ny);
+    basevec[0] = hsum[0] * inv_neval / double(nx);
+    basevec[4] = hsum[1] * inv_neval / double(ny);
+    basevec[8] = hsum[2] * inv_neval / double(nz);
+    basevec[7] = hsum[3] * inv_neval / double(nz);
+    basevec[6] = hsum[4] * inv_neval / double(nz);
+    basevec[3] = hsum[5] * inv_neval / double(ny);
     
     // write binary file, in fact, it is the force constants matrix that is written
     // Enforcement of ASR and the conversion of dynamical matrix is done in the postprocessing code
     char fname[MAXLINE];
-    FILE *GFC_bin;
-
     sprintf(fname,"%s.bin." BIGINT_FORMAT,prefix,update->ntimestep);
-    GFC_bin = fopen(fname,"wb");
+    FILE *fp_bin = fopen(fname,"wb");
 
-    fwrite(&sysdim, sizeof(int),    1, GFC_bin);
-    fwrite(&nx,     sizeof(int),    1, GFC_bin);
-    fwrite(&ny,     sizeof(int),    1, GFC_bin);
-    fwrite(&nz,     sizeof(int),    1, GFC_bin);
-    fwrite(&nucell, sizeof(int),    1, GFC_bin);
-    fwrite(&boltz,  sizeof(double), 1, GFC_bin);
+    fwrite(&sysdim, sizeof(int),    1, fp_bin);
+    fwrite(&nx,     sizeof(int),    1, fp_bin);
+    fwrite(&ny,     sizeof(int),    1, fp_bin);
+    fwrite(&nz,     sizeof(int),    1, fp_bin);
+    fwrite(&nucell, sizeof(int),    1, fp_bin);
+    fwrite(&boltz,  sizeof(double), 1, fp_bin);
 
-    fwrite(Phi_all[0],sizeof(double),ntotal*fft_dim2*2,GFC_bin);
+    fwrite(Phi_all[0],sizeof(double),ntotal*fft_dim2*2,fp_bin);
 
-    fwrite(&TempAve,      sizeof(double),1,      GFC_bin);
-    fwrite(&basevec[0],   sizeof(double),9,      GFC_bin);
-    fwrite(&basis_root[0],sizeof(double),fft_dim,GFC_bin);
-    fwrite(basetype,      sizeof(int),   nucell, GFC_bin);
-    fwrite(M_inv_sqrt,    sizeof(double),nucell, GFC_bin);
+    fwrite(&TempAve,      sizeof(double),1,      fp_bin);
+    fwrite(&basevec[0],   sizeof(double),9,      fp_bin);
+    fwrite(&basis_root[0],sizeof(double),fft_dim,fp_bin);
+    fwrite(basetype,      sizeof(int),   nucell, fp_bin);
+    fwrite(M_inv_sqrt,    sizeof(double),nucell, fp_bin);
 
-    fclose(GFC_bin);
+    fclose(fp_bin);
 
     // write log file, here however, it is the dynamical matrix that is written
     for (int i = 0; i < 60; ++i) fprintf(flog,"#"); fprintf(flog,"\n");
     fprintf(flog, "# Current time step                      : " BIGINT_FORMAT "\n", update->ntimestep);
-    fprintf(flog, "# Total number of measurements           : %d\n", GFcounter);
+    fprintf(flog, "# Total number of measurements           : %d\n", neval);
     fprintf(flog, "# Average temperature of the measurement : %lg\n", TempAve);
     fprintf(flog, "# Boltzmann constant under current units : %lg\n", boltz);
     fprintf(flog, "# basis vector A1 = [%lg %lg %lg]\n", basevec[0], basevec[1], basevec[2]);
