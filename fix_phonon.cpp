@@ -534,7 +534,7 @@ void FixPhonon::readmap()
 
   // auto-generate mapfile for "cluster" (gamma only system)
   if (strcmp(mapfile, "GAMMA") == 0){
-    nx = ny = nz = 1;
+    nx = ny = nz = ntotal = 1;
     nucell = ngroup;
 
     int *tag_loc, *tag_all;
@@ -566,34 +566,33 @@ void FixPhonon::readmap()
   }
 
   // read from map file for others
-  char strtmp[MAXLINE];
+  char line[MAXLINE];
   FILE *fp = fopen(mapfile, "r");
   if (fp == NULL){
-    char str[MAXLINE];
-    sprintf(str,"Cannot open input map file %s", mapfile);
-    error->all(FLERR,str);
+    sprintf(line,"Cannot open input map file %s", mapfile);
+    error->all(FLERR,line);
   }
 
-  if (fgets(strtmp,MAXLINE,fp) == NULL) error->all(FLERR,"Error while reading header of mapping file!");
-  nx = force->inumeric(FLERR, strtok(strtmp, " \n\t\r\f"));
-  ny = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
-  nz = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
-  nucell = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
+  if (fgets(line,MAXLINE,fp) == NULL) error->all(FLERR,"Error while reading header of mapping file!");
+  nx     = force->inumeric(FLERR, strtok(line, " \n\t\r\f"));
+  ny     = force->inumeric(FLERR, strtok(NULL, " \n\t\r\f"));
+  nz     = force->inumeric(FLERR, strtok(NULL, " \n\t\r\f"));
+  nucell = force->inumeric(FLERR, strtok(NULL, " \n\t\r\f"));
   ntotal = nx*ny*nz;
   if (ntotal*nucell != ngroup) error->all(FLERR,"FFT mesh and number of atoms in group mismatch!");
   
   // second line of mapfile is comment
-  if (fgets(strtmp,MAXLINE,fp) == NULL) error->all(FLERR,"Error while reading comment of mapping file!");
+  if (fgets(line,MAXLINE,fp) == NULL) error->all(FLERR,"Error while reading comment of mapping file!");
 
   int ix, iy, iz, iu;
   // the remaining lines carry the mapping info
   for (int i = 0; i < ngroup; ++i){
-    if (fgets(strtmp,MAXLINE,fp) == NULL) {info = 1; break;} 
-    ix = force->inumeric(FLERR, strtok(strtmp, " \n\t\r\f"));
-    iy = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
-    iz = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
-    iu = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
-    itag = force->inumeric(FLERR, strtok(NULL,   " \n\t\r\f"));
+    if (fgets(line,MAXLINE,fp) == NULL) {info = 1; break;} 
+    ix   = force->inumeric(FLERR, strtok(line, " \n\t\r\f"));
+    iy   = force->inumeric(FLERR, strtok(NULL, " \n\t\r\f"));
+    iz   = force->inumeric(FLERR, strtok(NULL, " \n\t\r\f"));
+    iu   = force->inumeric(FLERR, strtok(NULL, " \n\t\r\f"));
+    itag = force->inumeric(FLERR, strtok(NULL, " \n\t\r\f"));
 
     // check if index is in correct range
     if (ix < 0 || ix >= nx || iy < 0 || iy >= ny || iz < 0 || iz >= nz|| iu < 0 || iu >= nucell) {info = 2; break;}
