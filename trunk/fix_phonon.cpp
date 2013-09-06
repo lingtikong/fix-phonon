@@ -132,6 +132,7 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   getmass();
 
   // create FFT and allocate memory for FFT
+  // here the parallization is done on the x direction only
   nxlo = 0;
   int *nx_loc = new int [nprocs];
   for (int i = 0; i < nprocs; ++i){
@@ -384,7 +385,9 @@ void FixPhonon::end_of_step()
       fft_data[m++] = Rnow[idx][idim];
       fft_data[m++] = 0.;
     }
+
     fft->compute(fft_data, fft_data, -1);
+
     m = 0;
     for (idq = 0; idq < mynq; ++idq){
       Rqnow[idq][idim] = std::complex<double>(fft_data[m], fft_data[m+1]);
@@ -401,10 +404,10 @@ void FixPhonon::end_of_step()
 
   // get basis info
   if (fft_dim > sysdim){
+    double dist2orig[3];
     for (idx = 0; idx < mynpt; ++idx){
       ndim = sysdim;
       for (i = 1; i < nucell; ++i){
-        double dist2orig[3];
         for (idim = 0; idim < sysdim; ++idim) dist2orig[idim] = Rnow[idx][ndim++] - Rnow[idx][idim];
         domain->minimum_image(dist2orig);
         for (idim = 0; idim < sysdim; ++idim) basis[i][idim] += dist2orig[idim];
@@ -457,7 +460,8 @@ int FixPhonon::modify_param(int narg, char **arg)
 
     return 2;
   }
-  return 0;
+
+return 0;
 }
 
 /* ----------------------------------------------------------------------
