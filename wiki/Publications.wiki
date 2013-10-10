@@ -10,3 +10,4 @@
   # Ghuman K.K., Goyal N., Prakash S., _Vibrational density of states of TiO,,2,, nanoparticles_, [http://dx.doi.org/10.1016/j.jnoncrysol.2013.04.022 Journal of Non-Crystalline Solids 373-374:28-33, 2013.]
   # Pei Q.X., Zhang Y.W., Sha Z.D., Shenoy V.B.,_Tuning the thermal conductivity of silicene with tensile strain and isotopic doping: A molecular dynamics study_, [http://dx.doi.org/10.1063/1.4815960 Journal of Applied Physics 114 (3):033526, 2013.]
   # Kazanc S., _The effects on the lattice dynamical properties of the temperature and pressure in random NiPd alloy_, [http://dx.doi.org/10.1139/cjp-2013-0090 Canadian Journal of Physics 91 (10):833-838, 2013]
+  # Chellattoan R., Sathian S.P., _The effect of torsional deformation on thermal conductivity of mono-, bi- and trilayer graphene nanoribbon_, [http://dx.doi.org/10.1016/j.ssc.2013.08.027 Solid State Communications 173:1-4, 2013.]
