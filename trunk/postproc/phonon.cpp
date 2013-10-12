@@ -284,24 +284,29 @@ void Phonon::ldos_rsgf()
     if (nr < 1){
       istr = iend = ik;
       iinc = 1;
+
     } else if (nr == 1) {
       char *ptr = strtok(str," \t\n\r\f");
       if (strcmp(ptr,"q") == 0) break;
 
       ik = atoi(ptr);
-      if (ik < 0 || ik >= dynmat->nucell) break;
+      ik = MAX(0, MIN(ik, dynmat->nucell-1));
       istr = iend = ik;
       iinc = 1;
+
     } else if (nr == 2) {
       istr = atoi(strtok(str," \t\n\r\f"));
       iend = atoi(strtok(NULL," \t\n\r\f"));
       iinc = 1;
-      if (istr < 0||iend >= dynmat->nucell||istr > iend) break;
+      istr = MAX(0, MIN(istr, dynmat->nucell-1));
+      iend = MAX(0, MIN(iend, dynmat->nucell-1));
+
     } else if (nr >= 3) {
       istr = atoi(strtok(str," \t\n\r\f"));
       iend = atoi(strtok(NULL," \t\n\r\f"));
       iinc = atoi(strtok(NULL," \t\n\r\f"));
-      if (istr<0 || iend >= dynmat->nucell || istr > iend || iinc<1) break;
+      istr = MAX(0, MIN(istr, dynmat->nucell-1));
+      iend = MAX(0, MIN(iend, dynmat->nucell-1));
     }
 
     printf("Please input the frequency range to evaluate LDOS [%g %g]: ", fmin, fmax);
