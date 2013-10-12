@@ -884,7 +884,7 @@ void FixPhonon::EnforceASR()
         sum /= double(nucell);
         for (int kp = 0; kp < nucell; ++kp){
           int idx = (k*sysdim+a)*fft_dim + kp*sysdim + b;
-          real(Phi_all[0][idx]) -= sum;
+          Phi_all[0][idx] -= std::complex<double>(sum, 0.);
         }
       }
     }
@@ -898,7 +898,7 @@ void FixPhonon::EnforceASR()
         int idx = (k*sysdim+a)*fft_dim + kp*sysdim + b;
         int jdx = (kp*sysdim+b)*fft_dim + k*sysdim + a;
         csum = (real(Phi_all[0][idx])+real(Phi_all[0][jdx]))*0.5;
-        real(Phi_all[0][idx]) = real(Phi_all[0][jdx]) = csum;
+        Phi_all[0][idx] = Phi_all[0][jdx] = std::complex<double>(csum, 0.);
       }
     }
   }
@@ -916,8 +916,9 @@ void FixPhonon::EnforceASR()
       for (int kp = k; kp < nucell; ++kp){
         int idx = (k*sysdim+a)*fft_dim + kp*sysdim + b;
         int jdx = (kp*sysdim+b)*fft_dim + k*sysdim + a;
-        real(Phi_all[0][idx]) -= sum;
-        real(Phi_all[0][jdx]) = real(Phi_all[0][idx]);
+
+        Phi_all[0][idx] -= std::complex<double>(sum, 0.);
+        Phi_all[0][jdx] = Phi_all[0][idx];
       }
     }
   }

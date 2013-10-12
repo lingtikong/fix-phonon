@@ -1,4 +1,4 @@
-LAMMPS (21 Feb 2013)
+LAMMPS (23 Sep 2013)
 # 3D simple cubic lattice simulation
 dimension   2
 boundary    p f p
@@ -20062,14 +20062,14 @@ Step Temp PotEng TotEng
  1999800 0.0059277298 0.0020055057 0.0048767498 
  1999900 0.0059290305  0.002299977 0.0051718512 
  2000000 0.0047343315 0.0026625608 0.0049557526 
-Loop time of 32.3665 on 1 procs for 2000000 steps with 64 atoms
+Loop time of 36.7413 on 1 procs for 2000000 steps with 64 atoms
 
 Pair  time (%) = 0 (0)
-Bond  time (%) = 6.21905 (19.2145)
-Neigh time (%) = 3.25312 (10.0509)
-Comm  time (%) = 3.04437 (9.40594)
-Outpt time (%) = 0.0748212 (0.231169)
-Other time (%) = 19.7751 (61.0975)
+Bond  time (%) = 6.21948 (16.9278)
+Neigh time (%) = 3.63757 (9.9005)
+Comm  time (%) = 3.27223 (8.90612)
+Outpt time (%) = 2.95884 (8.05317)
+Other time (%) = 20.6532 (56.2125)
 
 Nlocal:    64 ave 64 max 64 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -20083,3 +20083,6 @@ Ave neighs/atom = 0
 Ave special neighs/atom = 6
 Neighbor list builds = 2000000
 Dangerous builds = 0
+
+Please see the log.cite file for references relevant to this simulation
+
