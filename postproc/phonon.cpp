@@ -75,7 +75,7 @@ Phonon::Phonon(DynMat *dm)
     else if (job == 7) ldos_egv(); 
     else if (job == 8) ldos_rsgf(); 
     else if (job == 9) vecanyq(); 
-    else if (job ==10) ShowCell();}
+    else if (job ==10) ShowCell();
     else if (job ==-1) dynmat->reset_interp_method();
     else break;
   }
