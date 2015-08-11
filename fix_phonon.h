@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------
+/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    www.cs.sandia.gov/~sjplimp/lammps.html
    Steve Plimpton, sjplimp@sandia.gov, Sandia National Laboratories
@@ -30,6 +30,14 @@ FixStyle(phonon,FixPhonon)
 
 #ifndef FIX_PHONON_H
 #define FIX_PHONON_H
+
+#ifdef FFT_SINGLE
+typedef float FFT_SCALAR;
+#define MPI_FFT_SCALAR MPI_FLOAT
+#else
+typedef double FFT_SCALAR;
+#define MPI_FFT_SCALAR MPI_DOUBLE
+#endif
 
 #include <complex>
 #include "fix.h"
@@ -72,10 +80,12 @@ class FixPhonon : public Fix {
   int mynpt,mynq,fft_nsend;
   int *fft_cnts, *fft_disp;
   int fft_dim, fft_dim2;
-  double *fft_data;
+  FFT_SCALAR *fft_data;
   
-  int  itag, idx, idq;                          // index variables
-  std::map<int,int> tag2surf, surf2tag;         // Mapping info
+  tagint itag;                                  // index variables
+  int idx, idq;                                 // more index variables
+  std::map<tagint,int> tag2surf;                // Mapping info
+  std::map<int,tagint> surf2tag;                // more Mapping info
 
   double **RIloc;                               // R(r) and index on local proc
   double **RIall;                               // gathered R(r) and index

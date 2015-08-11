@@ -51,7 +51,7 @@ tar:
 	rm -f ${ROOT}.tar; tar -czvf ${ROOT}.tar.gz *.cpp  *.h Makefile README
 
 ver:
-	@echo "#define VERSION `svn info|grep '^Revision'|cut -d: -f2`" > version.h
+	@echo "#define VERSION `git log|grep '^commit'|wc -l`" > version.h; cat version.h
 
 #====================================================================
 .f.o:
