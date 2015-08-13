@@ -45,6 +45,7 @@ typedef double FFT_SCALAR;
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "fft3d_wrap.h"
 
 namespace LAMMPS_NS {
 
