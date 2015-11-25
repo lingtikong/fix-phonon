@@ -1,35 +1,26 @@
-The files in this directory are a user-contributed package for LAMMPS.
+This package contains a fix phonon command that calculates dynamical
+matrices, which can then be used to compute phonon dispersion
+relations, directly from molecular dynamics simulations.
 
-This package implements the method to measure the dynamical matrices
-and consequently the phonon dispersion directly from molecular dynamics
-simulations, as a new fix to LAMMPS: FixPhonon.
+See the doc page for the fix phonon command for detailed usage
+instructions.
 
-See the documentation file of this command for detailed usage.
+Use of this package requires building LAMMPS with FFT suppport, as
+described in doc/Section_start.html.
 
-The compiling of this package along with LAMMPS requires that the FFT3d
-wrappers from the kspace package of LAMMPS be included as well.
+There are example scripts for using this package in
+examples/USER/phonon.
 
-Besides, you should also append 'user-phonon' to the 'PACKUSER' variable
-in the file of src/Makefile before invoke `make yes-user-phonon`.
+There is an auxiliary post-processing tool in tools/phonon that will
+compute phonon frequencies and dispersion relations from the dynamical
+matrices output by this command.
 
-For installation, please refer to file INSTALL.
+There is also an alternative code, dump2phonon, available which enables
+one to use the functions of fix-phonon by reading in atom-style dump
+files of lammps (which can be converted from the trajectories of any
+other MD code):
+   https://github.com/lingtikong/dump2phonon
 
-For usage, please check the doc and example directories. The postprocessing
-code is also provided in directory 'postproc'.
-
-NOTE: This package won't work if LAMMPS is compiled as serial version
-      with the mpi library in src/STUBS, as this mpi library is not
-      complete and some functions FixPhonon needed are not implemented.
-      If fftw is used, please use the double precision version.
-
-Files/directories included:
- 1) fix_phonon.h
- 2) fix_phonon.cpp
- 3) doc            : documents of fix-phonon
- 4) examples       : examples to illustrate the function and usage of fix-phonon
- 5) Install.sh     : Script to install/uninstall fix-phonon from lammps
- 6) postproc       : code to post-process the results from fix-phonon
- 7) README
-
-Author: Ling-Ti Kong, konglt@sjtu.edu.cn
-version: 1.75 / Feb 2013
+The person who created this package is Ling-Ti Kong (konglt at
+sjtu.edu.cn) at Shanghai Jiao Tong University.  Contact him directly
+if you have questions.
